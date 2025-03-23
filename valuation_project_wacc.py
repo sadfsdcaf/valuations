@@ -16,6 +16,10 @@ if ticker:
     stock, hist = fetch_stock_data(ticker)
     st.write(f"Company Info: {stock.info['longName']}")
 
+    st.subheader("All Available Attributes from yFinance API")
+    all_attributes = stock.info
+    st.json(all_attributes)
+
     total_revenue = stock.info.get("totalRevenue", 0) / 1_000_000
     cost_of_revenue = stock.info.get("costOfRevenue", 0) / 1_000_000
     if cost_of_revenue == 0 and total_revenue > 0:
