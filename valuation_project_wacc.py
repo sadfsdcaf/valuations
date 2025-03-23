@@ -16,10 +16,6 @@ if ticker:
     stock, hist = fetch_stock_data(ticker)
     st.write(f"Company Info: {stock.info['longName']}")
 
-    st.subheader("All Available Attributes from yFinance API")
-    all_attributes = stock.info
-    st.json(all_attributes)
-
     total_revenue = stock.info.get("totalRevenue", 0) / 1_000_000
     cost_of_revenue = stock.info.get("costOfRevenue", 0) / 1_000_000
     if cost_of_revenue == 0 and total_revenue > 0:
@@ -30,11 +26,13 @@ if ticker:
             cost_of_revenue = 0
 
     gross_profit = total_revenue - cost_of_revenue
+    operating_expenses = stock.info.get("totalOperatingExpenses", 0) / 1_000_000
 
-    st.subheader("Total Revenue, Cost of Revenues, and Gross Profit")
+    st.subheader("Total Revenue, Cost of Revenues, Gross Profit, and Operating Expenses")
     st.write(f"Total Revenue (TTM): ${total_revenue:,.2f}M")
     st.write(f"Cost of Revenues (TTM): ${cost_of_revenue:,.2f}M")
     st.write(f"Gross Profit (TTM): ${gross_profit:,.2f}M")
+    st.write(f"Operating Expenses (TTM): ${operating_expenses:,.2f}M")
 
     tax_provision = stock.info.get("incomeTaxExpense", 0) / 1_000_000
     pretax_income = stock.info.get("ebit", 0) / 1_000_000
@@ -47,7 +45,6 @@ if ticker:
     total_debt = stock.info.get("totalDebt", 0) / 1_000_000
     cash_and_investments = stock.info.get("totalCash", 0) / 1_000_000
     depreciation = stock.info.get("depreciation", 0) / 1_000_000
-    operating_expenses = stock.info.get("totalOperatingExpenses", 0) / 1_000_000
     ebit = gross_profit - operating_expenses
     capex = stock.info.get("capitalExpenditures", 0) / 1_000_000
     change_in_nwc = 0  # Placeholder — ideally sourced from financial statements or calculated from balance sheet changes.
