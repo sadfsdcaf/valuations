@@ -17,8 +17,11 @@ if ticker:
     st.write(f"Company Info: {stock.info['longName']}")
 
     total_revenue = stock.info.get("totalRevenue", 0) / 1_000_000
-    st.subheader("Total Revenue")
+    gross_profit = stock.info.get("grossProfits", 0) / 1_000_000
+
+    st.subheader("Total Revenue and Gross Profit")
     st.write(f"Total Revenue (TTM): ${total_revenue:,.2f}M")
+    st.write(f"Gross Profit (TTM): ${gross_profit:,.2f}M")
 
     market_cap = stock.info.get("marketCap", 0) / 1_000_000
     total_debt = stock.info.get("totalDebt", 0) / 1_000_000
