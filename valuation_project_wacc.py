@@ -50,5 +50,9 @@ if ticker:
     valuation_difference = current_market_cap - present_value
     st.write(f"Difference (Market Valuation - Cashflow Valuation): ${valuation_difference:,.2f}M")
 
+    if equity > 0:
+        vbv_ratio = current_market_cap / equity
+        st.write(f"V/BV (Market Valuation / Book Value of Equity): {vbv_ratio:.2f}")
+
     st.subheader("Historical Price Data")
     st.line_chart(hist['Close'])
