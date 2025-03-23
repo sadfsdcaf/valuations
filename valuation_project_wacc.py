@@ -16,7 +16,7 @@ def fetch_stock_data(ticker):
     hist = stock.history(period="5y")
     return stock, hist
 
-st.title("Valuation Calculator with WACC and Cashflow Assumptions")
+st.title("Valuation Calculator with WACC and Finance View Balance Sheet")
 
 ticker = st.text_input("Enter Ticker:", "AAPL")
 
@@ -31,7 +31,7 @@ if ticker:
 
     st.subheader("Assumptions")
     debt = st.number_input("Total Debt ($M)", min_value=0.0, value=10000.0)
-    equity = st.number_input("Total Equity ($M)", min_value=0.0, value=200000.0)
+    equity = st.number_input("Total Equity / Book Value ($M)", min_value=0.0, value=200000.0)
     cost_of_debt = st.number_input("Cost of Debt (%)", min_value=0.0, max_value=100.0, value=3.0) / 100
     cost_of_equity = st.number_input("Cost of Equity (%)", min_value=0.0, max_value=100.0, value=8.0) / 100
     tax_rate = st.number_input("Tax Rate (%)", min_value=0.0, max_value=100.0, value=21.0) / 100
@@ -46,7 +46,16 @@ if ticker:
         cashflows.append(cf)
 
     present_value = present_value_cashflows(cashflows, wacc)
-    st.write(f"Present Value of Cashflows: ${present_value:,.2f}M")
+    st.write(f"Present Value of Cashflows (PVGO): ${present_value:,.2f}M")
+
+    st.subheader("Finance View Balance Sheet")
+    assets_in_place = equity  # Book value of equity representing assets in place
+    pvgo = present_value      # Present value of growth opportunities
+    total_assets = assets_in_place + pvgo
+
+    st.write(f"Assets in Place (Book Value of Equity): ${assets_in_place:,.2f}M")
+    st.write(f"Present Value of Growth Opportunities (PVGO): ${pvgo:,.2f}M")
+    st.write(f"Total Assets (Assets in Place + PVGO): ${total_assets:,.2f}M")
 
     st.subheader("Market Valuation vs. Cashflow Valuation")
     current_market_cap = stock.info.get("marketCap", 0) / 1_000_000  # Convert to $M
