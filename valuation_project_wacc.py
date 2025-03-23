@@ -24,6 +24,11 @@ if ticker:
     stock, hist = fetch_stock_data(ticker)
     st.write(f"Company Info: {stock.info['longName']}")
 
+    if 'financials' in stock.info:
+        st.write(f"Financial Statement Date: {stock.info.get('financialCurrency', 'N/A')} (Check most recent 10-K/10-Q for accuracy)")
+    else:
+        st.write("Financial statement date information not available via yfinance. Please refer to the company’s latest reports.")
+
     st.subheader("Assumptions")
     debt = st.number_input("Total Debt ($M)", min_value=0.0, value=10000.0)
     equity = st.number_input("Total Equity ($M)", min_value=0.0, value=200000.0)
