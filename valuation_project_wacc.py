@@ -53,9 +53,14 @@ if ticker:
     pvgo = present_value      # Present value of growth opportunities
     total_assets = assets_in_place + pvgo
 
+    total_capital_structure = debt + equity
+
     st.write(f"Assets in Place (Book Value of Equity): ${assets_in_place:,.2f}M")
     st.write(f"Present Value of Growth Opportunities (PVGO): ${pvgo:,.2f}M")
     st.write(f"Total Assets (Assets in Place + PVGO): ${total_assets:,.2f}M")
+    st.write(f"Total Debt: ${debt:,.2f}M")
+    st.write(f"Total Equity: ${equity:,.2f}M")
+    st.write(f"Total Capital Structure (Debt + Equity): ${total_capital_structure:,.2f}M")
 
     st.subheader("Market Valuation vs. Cashflow Valuation")
     current_market_cap = stock.info.get("marketCap", 0) / 1_000_000  # Convert to $M
