@@ -16,16 +16,19 @@ ticker = st.text_input("Enter Ticker:", "AAPL")
 if ticker:
     stock = fetch_stock_data(ticker)
 
-    st.subheader("Key Financial Metrics")
-    total_revenue = stock.info.get("totalRevenue", 0)
-    cost_of_revenue = stock.info.get("costOfRevenue", 0)
-    depreciation = stock.info.get("depreciation", 0)
-    st.write(f"Revenues: ${total_revenue:,.2f}")
-    st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
-    st.write(f"Depreciation: ${depreciation:,.2f}")
+    st.subheader("Key Financial Metrics from Last Published Financials")
+    annual_financials = stock.financials
+    if not annual_financials.empty:
+        latest_column = annual_financials.columns[0]
+        total_revenue = annual_financials.loc['Total Revenue', latest_column] if 'Total Revenue' in annual_financials.index else 0
+        cost_of_revenue = annual_financials.loc['Cost Of Revenue', latest_column] if 'Cost Of Revenue' in annual_financials.index else 0
+        depreciation = annual_financials.loc['Depreciation', latest_column] if 'Depreciation' in annual_financials.index else 0
+
+        st.write(f"Revenues: ${total_revenue:,.2f}")
+        st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
+        st.write(f"Depreciation: ${depreciation:,.2f}")
 
     st.subheader("Annual Financial Statements (Last Published)")
-    annual_financials = stock.financials
     st.write(annual_financials)
 
     st.subheader("NOPAT Calculation")
