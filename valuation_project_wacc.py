@@ -64,7 +64,7 @@ if ticker:
 
     st.subheader("Market Valuation vs. Cashflow Valuation")
     current_market_cap = stock.info.get("marketCap", 0) / 1_000_000  # Convert to $M
-    st.write(f"Current Market Valuation: ${current_market_cap:,.2f}M")
+    st.write(f"Current Market Valuation (Market Cap): ${current_market_cap:,.2f}M")
 
     valuation_difference = current_market_cap - present_value
     st.write(f"Difference (Market Valuation - Cashflow Valuation): ${valuation_difference:,.2f}M")
