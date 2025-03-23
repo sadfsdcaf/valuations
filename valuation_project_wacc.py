@@ -26,13 +26,13 @@ if ticker:
             cost_of_revenue = 0
 
     gross_profit = total_revenue - cost_of_revenue
-    operating_expenses = stock.info.get("totalOperatingExpenses", 0) / 1_000_000
+    operating_income = stock.info.get("operatingIncome", 0) / 1_000_000
 
-    st.subheader("Total Revenue, Cost of Revenues, Gross Profit, and Operating Expenses")
+    st.subheader("Total Revenue, Cost of Revenues, Gross Profit, and Operating Income")
     st.write(f"Total Revenue (TTM): ${total_revenue:,.2f}M")
     st.write(f"Cost of Revenues (TTM): ${cost_of_revenue:,.2f}M")
     st.write(f"Gross Profit (TTM): ${gross_profit:,.2f}M")
-    st.write(f"Operating Expenses (TTM): ${operating_expenses:,.2f}M")
+    st.write(f"Operating Income (TTM): ${operating_income:,.2f}M")
 
     tax_provision = stock.info.get("incomeTaxExpense", 0) / 1_000_000
     pretax_income = stock.info.get("ebit", 0) / 1_000_000
@@ -45,7 +45,7 @@ if ticker:
     total_debt = stock.info.get("totalDebt", 0) / 1_000_000
     cash_and_investments = stock.info.get("totalCash", 0) / 1_000_000
     depreciation = stock.info.get("depreciation", 0) / 1_000_000
-    ebit = gross_profit - operating_expenses
+    ebit = operating_income  # Now using reported operating income
     capex = stock.info.get("capitalExpenditures", 0) / 1_000_000
     change_in_nwc = 0  # Placeholder — ideally sourced from financial statements or calculated from balance sheet changes.
 
@@ -60,7 +60,7 @@ if ticker:
     nopat = ebit * (1 - tax_rate)
     fcf = nopat + depreciation - capex - change_in_nwc
 
-    st.write(f"Calculated EBIT (Gross Profit - Operating Expenses): ${ebit:,.2f}M")
+    st.write(f"Reported Operating Income (EBIT): ${ebit:,.2f}M")
     st.write(f"Tax Provision: ${tax_provision:,.2f}M")
     st.write(f"Pre-Tax Income (EBIT): ${pretax_income:,.2f}M")
     st.write(f"Calculated Tax Rate (Tax Provision / Pre-Tax Income): {tax_rate * 100:.2f}%")
