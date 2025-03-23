@@ -32,6 +32,13 @@ if ticker:
     st.write(f"Cost of Revenues (TTM): ${cost_of_revenue:,.2f}M")
     st.write(f"Gross Profit (TTM): ${gross_profit:,.2f}M")
 
+    tax_provision = stock.info.get("incomeTaxExpense", 0) / 1_000_000
+    pretax_income = stock.info.get("ebit", 0) / 1_000_000
+    if pretax_income > 0:
+        tax_rate = tax_provision / pretax_income
+    else:
+        tax_rate = 0.21  # fallback if data not available
+
     market_cap = stock.info.get("marketCap", 0) / 1_000_000
     total_debt = stock.info.get("totalDebt", 0) / 1_000_000
     cash_and_investments = stock.info.get("totalCash", 0) / 1_000_000
@@ -40,8 +47,6 @@ if ticker:
     ebit = gross_profit - operating_expenses
     capex = stock.info.get("capitalExpenditures", 0) / 1_000_000
     change_in_nwc = 0  # Placeholder — ideally sourced from financial statements or calculated from balance sheet changes.
-
-    tax_rate = stock.info.get("effectiveTaxRate", 0.21)  # Attempt to pull tax rate; fallback to 21%
 
     enterprise_value = market_cap + total_debt - cash_and_investments
     st.subheader("Valuation Summary from yFinance")
@@ -55,7 +60,9 @@ if ticker:
     fcf = nopat + depreciation - capex - change_in_nwc
 
     st.write(f"Calculated EBIT (Gross Profit - Operating Expenses): ${ebit:,.2f}M")
-    st.write(f"Effective Tax Rate: {tax_rate * 100:.2f}%")
+    st.write(f"Tax Provision: ${tax_provision:,.2f}M")
+    st.write(f"Pre-Tax Income (EBIT): ${pretax_income:,.2f}M")
+    st.write(f"Calculated Tax Rate (Tax Provision / Pre-Tax Income): {tax_rate * 100:.2f}%")
     st.write(f"NOPAT (EBIT * (1 - T)): ${nopat:,.2f}M")
     st.write(f"Depreciation: ${depreciation:,.2f}M")
     st.write(f"Capital Expenditures: ${capex:,.2f}M")
