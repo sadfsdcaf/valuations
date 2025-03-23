@@ -1,89 +1,45 @@
 import yfinance as yf
-import pandas as pd
-import numpy as np
 import streamlit as st
+
+st.title("All Available yFinance Fields Display")
 
 def fetch_stock_data(ticker):
     stock = yf.Ticker(ticker)
-    hist = stock.history(period="5y")
-    return stock, hist
-
-st.title("Automated Valuation Based on yFinance Data")
+    return stock
 
 ticker = st.text_input("Enter Ticker:", "AAPL")
 
 if ticker:
-    stock, hist = fetch_stock_data(ticker)
-    st.write(f"Company Info: {stock.info['longName']}")
+    stock = fetch_stock_data(ticker)
+    info = stock.info
 
-    total_revenue = stock.info.get("totalRevenue", 0) / 1_000_000
-    cost_of_revenue = stock.info.get("costOfRevenue", 0) / 1_000_000
-    if cost_of_revenue == 0 and total_revenue > 0:
-        gross_profit = stock.info.get("grossProfits", 0) / 1_000_000
-        if gross_profit > 0:
-            cost_of_revenue = total_revenue - gross_profit
-        else:
-            cost_of_revenue = 0
+    fields = [
+        "address1", "algorithm", "annualHoldingsTurnover", "annualReportExpenseRatio", "ask", "askSize",
+        "averageDailyVolume10Day", "averageVolume", "averageVolume10days", "beta", "bid", "bidSize", "bookValue",
+        "category", "circulatingSupply", "city", "companyOfficers", "compensationAsOfEpochDate", "country",
+        "currency", "currentPrice", "currentRatio", "dateShortInterest", "dayHigh", "dayLow", "debtToEquity",
+        "dividendRate", "dividendYield", "earningsGrowth", "earningsQuarterlyGrowth", "ebitda", "ebitdaMargins",
+        "enterpriseToEbitda", "enterpriseToRevenue", "enterpriseValue", "exDividendDate", "exchange",
+        "exchangeTimezoneName", "exchangeTimezoneShortName", "fiftyDayAverage", "fiftyTwoWeekHigh", "fiftyTwoWeekLow",
+        "financialCurrency", "floatShares", "forwardEps", "forwardPE", "freeCashflow", "fundFamily",
+        "fundInceptionDate", "gmtOffSetMilliseconds", "grossMargins", "grossProfits", "heldPercentInsiders",
+        "heldPercentInstitutions", "industry", "isEsgPopulated", "lastCapGain", "lastDividendDate", "lastDividendValue",
+        "lastFiscalYearEnd", "lastSplitDate", "lastSplitFactor", "longBusinessSummary", "longName", "market",
+        "marketCap", "maxAge", "maxSupply", "morningStarOverallRating", "morningStarRiskRating", "netIncomeToCommon",
+        "nextFiscalYearEnd", "numberOfAnalystOpinions", "open", "openInterest", "operatingCashflow", "operatingMargins",
+        "payoutRatio", "pegRatio", "phone", "previousClose", "priceHint", "priceToBook", "priceToSalesTrailing12Months",
+        "profitMargins", "quickRatio", "quoteType", "recommendationKey", "recommendationMean", "regularMarketDayHigh",
+        "regularMarketDayLow", "regularMarketOpen", "regularMarketPreviousClose", "regularMarketPrice",
+        "regularMarketVolume", "revenueGrowth", "revenuePerShare", "returnOnAssets", "returnOnEquity", "sector",
+        "sharesOutstanding", "sharesPercentSharesOut", "sharesShort", "sharesShortPreviousMonthDate", "sharesShortPriorMonth",
+        "shortName", "shortPercentOfFloat", "shortRatio", "startDate", "state", "symbol", "targetHighPrice",
+        "targetLowPrice", "targetMeanPrice", "targetMedianPrice", "threeYearAverageReturn", "totalAssets", "totalCash",
+        "totalCashPerShare", "totalDebt", "totalRevenue", "tradeable", "trailingAnnualDividendRate",
+        "trailingAnnualDividendYield", "trailingEps", "trailingPE", "twoHundredDayAverage", "volume", "website", "yield",
+        "zip"
+    ]
 
-    gross_profit = total_revenue - cost_of_revenue
-    operating_income = stock.info.get("operatingIncome", 0) / 1_000_000
-    operating_margins = stock.info.get("operatingMargins", 0) * 100
-    ebitda = stock.info.get("ebitda", 0) / 1_000_000
-
-    st.subheader("Total Revenue, Cost of Revenues, Gross Profit, Operating Income, Operating Margins, EBITDA, and Net Income")
-    st.write(f"Total Revenue (TTM): ${total_revenue:,.2f}M")
-    st.write(f"Cost of Revenues (TTM): ${cost_of_revenue:,.2f}M")
-    st.write(f"Gross Profit (TTM): ${gross_profit:,.2f}M")
-    st.write(f"Operating Income (TTM): ${operating_income:,.2f}M")
-    st.write(f"Operating Margins: {operating_margins:.2f}%")
-    st.write(f"EBITDA (TTM): ${ebitda:,.2f}M")
-
-    net_income = stock.info.get("netIncomeToCommon", 0) / 1_000_000
-    interest_expense = stock.info.get("interestExpense", 0) / 1_000_000
-    other_income_expense = stock.info.get("otherIncomeExpense", 0) / 1_000_000
-    st.write(f"Net Income to Common (TTM): ${net_income:,.2f}M")
-    st.write(f"Interest Expense (TTM): ${interest_expense:,.2f}M")
-    st.write(f"Other Income/Expense (TTM): ${other_income_expense:,.2f}M")
-
-    tax_provision = stock.info.get("incomeTaxExpense", 0) / 1_000_000
-    pretax_income = stock.info.get("ebit", 0) / 1_000_000
-    if pretax_income > 0:
-        tax_rate = tax_provision / pretax_income
-    else:
-        tax_rate = 0.21  # fallback if data not available
-
-    market_cap = stock.info.get("marketCap", 0) / 1_000_000
-    total_debt = stock.info.get("totalDebt", 0) / 1_000_000
-    cash_and_investments = stock.info.get("totalCash", 0) / 1_000_000
-    depreciation = stock.info.get("depreciation", 0) / 1_000_000
-    ebit = operating_income  # Now using reported operating income
-    capex = stock.info.get("capitalExpenditures", 0) / 1_000_000
-    change_in_nwc = 0  # Placeholder — ideally sourced from financial statements or calculated from balance sheet changes.
-
-    enterprise_value = market_cap + total_debt - cash_and_investments
-    st.subheader("Valuation Summary from yFinance")
-    st.write(f"Market Capitalization: ${market_cap:,.2f}M")
-    st.write(f"Total Debt: ${total_debt:,.2f}M")
-    st.write(f"Cash & Short-Term Investments: ${cash_and_investments:,.2f}M")
-    st.write(f"Enterprise Value (Market Cap + Debt - Cash): ${enterprise_value:,.2f}M")
-
-    st.subheader("Free Cash Flow (FCF) Calculation")
-    nopat = ebit * (1 - tax_rate)
-    fcf = nopat + depreciation - capex - change_in_nwc
-
-    st.write(f"Reported Operating Income (EBIT): ${ebit:,.2f}M")
-    st.write(f"EBITDA (TTM): ${ebitda:,.2f}M")
-    st.write(f"Tax Provision: ${tax_provision:,.2f}M")
-    st.write(f"Pre-Tax Income (EBIT): ${pretax_income:,.2f}M")
-    st.write(f"Calculated Tax Rate (Tax Provision / Pre-Tax Income): {tax_rate * 100:.2f}%")
-    st.write(f"Net Income to Common: ${net_income:,.2f}M")
-    st.write(f"Interest Expense: ${interest_expense:,.2f}M")
-    st.write(f"Other Income/Expense: ${other_income_expense:,.2f}M")
-    st.write(f"NOPAT (EBIT * (1 - T)): ${nopat:,.2f}M")
-    st.write(f"Depreciation: ${depreciation:,.2f}M")
-    st.write(f"Capital Expenditures: ${capex:,.2f}M")
-    st.write(f"ΔNWC (Placeholder): ${change_in_nwc:,.2f}M")
-    st.write(f"Calculated Free Cash Flow (FCF): ${fcf:,.2f}M")
-
-    st.subheader("Historical Price Data")
-    st.line_chart(hist['Close'])
+    st.subheader("Key yFinance Fields")
+    for field in fields:
+        value = info.get(field, "Not Available")
+        st.write(f"{field}: {value}")
