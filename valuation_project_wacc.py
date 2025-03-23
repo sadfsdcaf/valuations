@@ -18,6 +18,13 @@ if ticker:
 
     total_revenue = stock.info.get("totalRevenue", 0) / 1_000_000
     cost_of_revenue = stock.info.get("costOfRevenue", 0) / 1_000_000
+    if cost_of_revenue == 0 and total_revenue > 0:
+        gross_profit = stock.info.get("grossProfits", 0) / 1_000_000
+        if gross_profit > 0:
+            cost_of_revenue = total_revenue - gross_profit
+        else:
+            cost_of_revenue = 0
+
     gross_profit = total_revenue - cost_of_revenue
 
     st.subheader("Total Revenue, Cost of Revenues, and Gross Profit")
