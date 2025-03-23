@@ -17,19 +17,20 @@ if ticker:
     st.write(f"Company Info: {stock.info['longName']}")
 
     total_revenue = stock.info.get("totalRevenue", 0) / 1_000_000
-    gross_profit = stock.info.get("grossProfits", 0) / 1_000_000
-    cost_of_revenue = total_revenue - gross_profit
+    cost_of_revenue = stock.info.get("costOfRevenue", 0) / 1_000_000
+    gross_profit = total_revenue - cost_of_revenue
 
-    st.subheader("Total Revenue, Gross Profit, and Cost of Revenues")
+    st.subheader("Total Revenue, Cost of Revenues, and Gross Profit")
     st.write(f"Total Revenue (TTM): ${total_revenue:,.2f}M")
-    st.write(f"Gross Profit (TTM): ${gross_profit:,.2f}M")
     st.write(f"Cost of Revenues (TTM): ${cost_of_revenue:,.2f}M")
+    st.write(f"Gross Profit (TTM): ${gross_profit:,.2f}M")
 
     market_cap = stock.info.get("marketCap", 0) / 1_000_000
     total_debt = stock.info.get("totalDebt", 0) / 1_000_000
     cash_and_investments = stock.info.get("totalCash", 0) / 1_000_000
-    ebit = stock.info.get("ebit", 0) / 1_000_000
     depreciation = stock.info.get("depreciation", 0) / 1_000_000
+    operating_expenses = stock.info.get("totalOperatingExpenses", 0) / 1_000_000
+    ebit = gross_profit - operating_expenses
     capex = stock.info.get("capitalExpenditures", 0) / 1_000_000
     change_in_nwc = 0  # Placeholder — ideally sourced from financial statements or calculated from balance sheet changes.
     tax_rate = 0.21  # Default tax rate; could be estimated or sourced.
@@ -45,7 +46,7 @@ if ticker:
     nopat = ebit * (1 - tax_rate)
     fcf = nopat + depreciation - capex - change_in_nwc
 
-    st.write(f"EBIT: ${ebit:,.2f}M")
+    st.write(f"Calculated EBIT (Gross Profit - Operating Expenses): ${ebit:,.2f}M")
     st.write(f"NOPAT (EBIT * (1 - T)): ${nopat:,.2f}M")
     st.write(f"Depreciation: ${depreciation:,.2f}M")
     st.write(f"Capital Expenditures: ${capex:,.2f}M")
