@@ -27,12 +27,14 @@ if ticker:
 
     gross_profit = total_revenue - cost_of_revenue
     operating_income = stock.info.get("operatingIncome", 0) / 1_000_000
+    operating_margins = stock.info.get("operatingMargins", 0) * 100
 
-    st.subheader("Total Revenue, Cost of Revenues, Gross Profit, Operating Income, and Net Income")
+    st.subheader("Total Revenue, Cost of Revenues, Gross Profit, Operating Income, Operating Margins, and Net Income")
     st.write(f"Total Revenue (TTM): ${total_revenue:,.2f}M")
     st.write(f"Cost of Revenues (TTM): ${cost_of_revenue:,.2f}M")
     st.write(f"Gross Profit (TTM): ${gross_profit:,.2f}M")
     st.write(f"Operating Income (TTM): ${operating_income:,.2f}M")
+    st.write(f"Operating Margins: {operating_margins:.2f}%")
 
     net_income = stock.info.get("netIncomeToCommon", 0) / 1_000_000
     st.write(f"Net Income to Common (TTM): ${net_income:,.2f}M")
