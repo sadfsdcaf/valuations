@@ -40,7 +40,8 @@ if ticker:
     ebit = gross_profit - operating_expenses
     capex = stock.info.get("capitalExpenditures", 0) / 1_000_000
     change_in_nwc = 0  # Placeholder — ideally sourced from financial statements or calculated from balance sheet changes.
-    tax_rate = 0.21  # Default tax rate; could be estimated or sourced.
+
+    tax_rate = stock.info.get("effectiveTaxRate", 0.21)  # Attempt to pull tax rate; fallback to 21%
 
     enterprise_value = market_cap + total_debt - cash_and_investments
     st.subheader("Valuation Summary from yFinance")
@@ -54,6 +55,7 @@ if ticker:
     fcf = nopat + depreciation - capex - change_in_nwc
 
     st.write(f"Calculated EBIT (Gross Profit - Operating Expenses): ${ebit:,.2f}M")
+    st.write(f"Effective Tax Rate: {tax_rate * 100:.2f}%")
     st.write(f"NOPAT (EBIT * (1 - T)): ${nopat:,.2f}M")
     st.write(f"Depreciation: ${depreciation:,.2f}M")
     st.write(f"Capital Expenditures: ${capex:,.2f}M")
