@@ -16,7 +16,7 @@ def fetch_stock_data(ticker):
     hist = stock.history(period="5y")
     return stock, hist
 
-st.title("Valuation Calculator with WACC and Finance View Balance Sheet")
+st.title("Valuation Calculator with WACC, Finance View Balance Sheet, and Enterprise Value")
 
 ticker = st.text_input("Enter Ticker:", "AAPL")
 
@@ -32,6 +32,7 @@ if ticker:
     st.subheader("Assumptions")
     debt = st.number_input("Total Debt ($M)", min_value=0.0, value=10000.0)
     equity = st.number_input("Total Equity / Book Value ($M)", min_value=0.0, value=200000.0)
+    cash_and_investments = st.number_input("Cash & Short Term Investments ($M)", min_value=0.0, value=5000.0)
     cost_of_debt = st.number_input("Cost of Debt (%)", min_value=0.0, max_value=100.0, value=3.0) / 100
     cost_of_equity = st.number_input("Cost of Equity (%)", min_value=0.0, max_value=100.0, value=8.0) / 100
     tax_rate = st.number_input("Tax Rate (%)", min_value=0.0, max_value=100.0, value=21.0) / 100
@@ -62,9 +63,12 @@ if ticker:
     st.write(f"Total Equity: ${equity:,.2f}M")
     st.write(f"Total Capital Structure (Debt + Equity): ${total_capital_structure:,.2f}M")
 
-    st.subheader("Market Valuation vs. Cashflow Valuation")
+    st.subheader("Market Valuation, Enterprise Value, and Comparisons")
     current_market_cap = stock.info.get("marketCap", 0) / 1_000_000  # Convert to $M
     st.write(f"Current Market Valuation (Market Cap): ${current_market_cap:,.2f}M")
+
+    enterprise_value = current_market_cap + debt - cash_and_investments
+    st.write(f"Enterprise Value (Market Cap + Debt - Cash): ${enterprise_value:,.2f}M")
 
     valuation_difference = current_market_cap - present_value
     st.write(f"Difference (Market Valuation - Cashflow Valuation): ${valuation_difference:,.2f}M")
