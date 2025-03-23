@@ -43,6 +43,12 @@ if ticker:
     present_value = present_value_cashflows(cashflows, wacc)
     st.write(f"Present Value of Cashflows: ${present_value:,.2f}M")
 
+    st.subheader("Market Valuation vs. Cashflow Valuation")
+    current_market_cap = stock.info.get("marketCap", 0) / 1_000_000  # Convert to $M
+    st.write(f"Current Market Valuation: ${current_market_cap:,.2f}M")
+
+    valuation_difference = current_market_cap - present_value
+    st.write(f"Difference (Market Valuation - Cashflow Valuation): ${valuation_difference:,.2f}M")
+
     st.subheader("Historical Price Data")
     st.line_chart(hist['Close'])
-
