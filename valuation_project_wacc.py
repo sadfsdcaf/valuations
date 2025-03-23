@@ -25,6 +25,8 @@ if ticker:
         depreciation = annual_financials.loc['Depreciation', latest_column] if 'Depreciation' in annual_financials.index else 0
         operating_expense = annual_financials.loc['Total Operating Expenses', latest_column] if 'Total Operating Expenses' in annual_financials.index else 0
         pretax_income = annual_financials.loc['Pretax Income', latest_column] if 'Pretax Income' in annual_financials.index else 0
+        tax_provision_reported = annual_financials.loc['Tax Provision', latest_column] if 'Tax Provision' in annual_financials.index else 0
+        calculated_tax_rate = (tax_provision_reported / pretax_income) if pretax_income != 0 else 0
         gross_profit = total_revenue - cost_of_revenue
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
@@ -33,6 +35,8 @@ if ticker:
         st.write(f"Operating Expense: ${operating_expense:,.2f}")
         st.write(f"Depreciation: ${depreciation:,.2f}")
         st.write(f"Pretax Income: ${pretax_income:,.2f}")
+        st.write(f"Tax Provision (Reported): ${tax_provision_reported:,.2f}")
+        st.write(f"Calculated Tax Rate (Tax Provision / Pretax Income): {calculated_tax_rate * 100:.2f}%")
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
