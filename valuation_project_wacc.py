@@ -23,11 +23,13 @@ if ticker:
         total_revenue = annual_financials.loc['Total Revenue', latest_column] if 'Total Revenue' in annual_financials.index else 0
         cost_of_revenue = annual_financials.loc['Cost Of Revenue', latest_column] if 'Cost Of Revenue' in annual_financials.index else 0
         depreciation = annual_financials.loc['Depreciation', latest_column] if 'Depreciation' in annual_financials.index else 0
+        operating_expense = annual_financials.loc['Total Operating Expenses', latest_column] if 'Total Operating Expenses' in annual_financials.index else 0
         gross_profit = total_revenue - cost_of_revenue
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
         st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
         st.write(f"Gross Profit: ${gross_profit:,.2f}")
+        st.write(f"Operating Expense: ${operating_expense:,.2f}")
         st.write(f"Depreciation: ${depreciation:,.2f}")
 
     st.subheader("Annual Financial Statements (Last Published)")
