@@ -39,7 +39,11 @@ if ticker:
     st.write(f"EBITDA (TTM): ${ebitda:,.2f}M")
 
     net_income = stock.info.get("netIncomeToCommon", 0) / 1_000_000
+    interest_expense = stock.info.get("interestExpense", 0) / 1_000_000
+    other_income_expense = stock.info.get("otherIncomeExpense", 0) / 1_000_000
     st.write(f"Net Income to Common (TTM): ${net_income:,.2f}M")
+    st.write(f"Interest Expense (TTM): ${interest_expense:,.2f}M")
+    st.write(f"Other Income/Expense (TTM): ${other_income_expense:,.2f}M")
 
     tax_provision = stock.info.get("incomeTaxExpense", 0) / 1_000_000
     pretax_income = stock.info.get("ebit", 0) / 1_000_000
@@ -73,6 +77,8 @@ if ticker:
     st.write(f"Pre-Tax Income (EBIT): ${pretax_income:,.2f}M")
     st.write(f"Calculated Tax Rate (Tax Provision / Pre-Tax Income): {tax_rate * 100:.2f}%")
     st.write(f"Net Income to Common: ${net_income:,.2f}M")
+    st.write(f"Interest Expense: ${interest_expense:,.2f}M")
+    st.write(f"Other Income/Expense: ${other_income_expense:,.2f}M")
     st.write(f"NOPAT (EBIT * (1 - T)): ${nopat:,.2f}M")
     st.write(f"Depreciation: ${depreciation:,.2f}M")
     st.write(f"Capital Expenditures: ${capex:,.2f}M")
