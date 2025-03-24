@@ -102,7 +102,6 @@ if ticker:
                 total_debt,
                 long_term_debt,
                 current_debt,
-                other_non_current_liabilities,
                 total_equity,
                 total_debt + total_equity
             ]
