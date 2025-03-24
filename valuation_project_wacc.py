@@ -46,7 +46,7 @@ if ticker:
         accounts_payable = cashflow.loc['Change In Payable', latest_column] if 'Change In Payable' in cashflow.index else 0
         other_liabilities = cashflow.loc['Change In Other Current Liabilities', latest_column] if 'Change In Other Current Liabilities' in cashflow.index else 0
 
-        fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
+        fcf = nopat - depreciation_amortization_depletion + net_ppe_purchase_and_sale + change_in_working_capital
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
         st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
