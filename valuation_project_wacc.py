@@ -38,6 +38,7 @@ if ticker:
 
         change_in_working_capital = cashflow.loc['Change In Working Capital', latest_column] if 'Change In Working Capital' in cashflow.index else 0
         net_ppe = balance_sheet.loc['Net PPE', latest_column] if 'Net PPE' in balance_sheet.index else 0
+        cash_flow_from_operating_activities = cashflow.loc['Cash Flow From Continuing Operating Activities', latest_column] if 'Cash Flow From Continuing Operating Activities' in cashflow.index else 0
         fcf = nopat - net_ppe - change_in_working_capital
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
@@ -55,6 +56,7 @@ if ticker:
         st.write(f"NOPAT (Pretax Income * (1 - Tax Rate)): ${nopat:,.2f}")
         st.write(f"Net PPE: ${net_ppe:,.2f}")
         st.write(f"Change in Net Working Capital (from Cash Flow Statement): ${change_in_working_capital:,.2f}")
+        st.write(f"Cash Flow From Continuing Operating Activities: ${cash_flow_from_operating_activities:,.2f}")
         st.write(f"Free Cash Flow (FCF = NOPAT - Net PPE - Change in Working Capital): ${fcf:,.2f}")
 
     st.subheader("Annual Financial Statements (Last Published)")
