@@ -153,7 +153,20 @@ if ticker:
         })
 
         st.table(expected_return_table)
+        
+        st.subheader("Valuation")
+        continuing_value_no_growth = nopat/wacc
+        Valuation = pd.DataFrame({
+            'Metric': [
+                'No Growth Perpetuity',
+            ],
+            'Value': [
+                continuing_value_no_growth if continuing_value_no_growth != 'N/A' else 'N/A'
+            ]
+        })
 
+        st.table(Valuation)
+    
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
 
