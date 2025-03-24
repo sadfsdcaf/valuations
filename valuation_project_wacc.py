@@ -46,14 +46,16 @@ if ticker:
         accounts_payable = cashflow.loc['Change In Payable', latest_column] if 'Change In Payable' in cashflow.index else 0
         other_liabilities = cashflow.loc['Change In Other Current Liabilities', latest_column] if 'Change In Other Current Liabilities' in cashflow.index else 0
 
-        fcf = nopat + depreciation - net_ppe_purchase_and_sale - change_in_working_capital
+        fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
         st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
         st.write(f"Gross Profit: ${gross_profit:,.2f}")
-        st.write(f"Net Income to Common Stockholders: ${net_income_to_common:,.2f}")
         st.write(f"Depreciation (Reconciled): ${depreciation:,.2f}")
         st.write(f"EBIT: ${pretax_income:,.2f}")
+        st.write(f"Net Income to Common Stockholders: ${net_income_to_common:,.2f}")
+       
+
 
         st.write("### Tax Section")
         st.write(f"Tax Provision (Reported): ${tax_provision_reported:,.2f}")
