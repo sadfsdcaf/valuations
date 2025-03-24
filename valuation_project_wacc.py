@@ -156,7 +156,7 @@ if ticker:
         
         st.subheader("Valuation")
         continuing_value_no_growth = nopat/wacc
-        continuing_value_growth = nopat/wacc-.05
+        continuing_value_growth = nopat/(wacc-.05)
         Valuation = pd.DataFrame({
             'Metric': [
                 'No Growth Perpetuity',
