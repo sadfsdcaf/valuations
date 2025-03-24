@@ -14,7 +14,7 @@ def fetch_stock_data(ticker):
 def format_millions(value):
     return round(value / 1_000_000, 2) if value else 0
 
-def display_gaap_income_statement(financials, latest_column):
+def display_gaap_income_statement_as_table(financials, latest_column):
     gaap_order = [
         "Total Revenue", "Operating Revenue", "Cost Of Revenue", "Gross Profit",
         "Operating Expense", "Selling General and Administrative", "Research & Development",
@@ -29,10 +29,15 @@ def display_gaap_income_statement(financials, latest_column):
         "Reconciled Cost of Revenue", "Reconciled Depreciation",
         "Net Income from Continuing Operation Net Minority Interest", "Normalized EBITDA", "Tax Rate for Calcs"
     ]
+
+    data = []
     for parent in gaap_order:
         if parent in financials.index:
             val = format_millions(financials.loc[parent, latest_column])
-            st.write(f"**{parent}**: {val}M")
+            data.append({"Metric": parent, "Value (M)": val})
+
+    df = pd.DataFrame(data)
+    st.table(df)
 
 def get_10yr_treasury_yield():
     treasury_ticker = yf.Ticker("^TNX")
@@ -110,8 +115,8 @@ if ticker:
 
         st.table(summary_table)
 
-        st.subheader("Annual Financial Statements (GAAP Structured View)")
-        display_gaap_income_statement(annual_financials, latest_column)
+        st.subheader("Annual Financial Statements (GAAP Structured Table View)")
+        display_gaap_income_statement_as_table(annual_financials, latest_column)
 
         st.subheader("Balance Sheet (Last Published)")
         st.write(balance_sheet)
