@@ -86,7 +86,7 @@ if ticker:
         # Growth calculation
         reinvestment_rate = ((net_ppe_purchase_and_sale - depreciation_amortization_depletion ) + change_in_working_capital) / nopat if nopat else 0
         roic = nopat / total_invested_capital if total_invested_capital else 0
-        growth_rate = reinvestment_rate * roic
+        growth_rate = reinvestment_rate / roic
 
         valuation_growth = nopat / (wacc - growth_rate) if wacc > growth_rate else 0
         valuation_no_growth = nopat / wacc if wacc else 0
