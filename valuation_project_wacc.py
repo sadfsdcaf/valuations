@@ -89,11 +89,20 @@ if ticker:
         st.subheader("Breakdown of Changes in Working Capital")
         st.table(wc_breakdown_table)
 
+        long_term_debt = format_millions(balance_sheet.loc['Long Term Debt', latest_column]) if 'Long Term Debt' in balance_sheet.index else 0
+        current_debt = format_millions(balance_sheet.loc['Current Debt', latest_column]) if 'Current Debt' in balance_sheet.index else 0
+        total_debt = long_term_debt + current_debt
+
+        total_equity = format_millions(balance_sheet.loc['Total Equity Gross Minority Interest', latest_column]) if 'Total Equity Gross Minority Interest' in balance_sheet.index else 0
+        total_invested_capital = total_debt + total_equity
+        d_ic_ratio = (total_debt / total_invested_capital) * 100 if total_invested_capital != 0 else 0
+        e_ic_ratio = (total_equity / total_invested_capital) * 100 if total_invested_capital != 0 else 0
+
         invested_capital_table = pd.DataFrame({
             'Metric': [
                 'Total Debt (M)',
-                '   - Long Term Debt (M)',
-                '   - Current Debt (M)',
+                '  - Long Term Debt (M)',
+                '  - Current Debt (M)',
                 'Total Equity (M)',
                 'Total Invested Capital (M)',
                 'Debt / Invested Capital (%)',
@@ -104,7 +113,7 @@ if ticker:
                 long_term_debt,
                 current_debt,
                 total_equity,
-                total_debt + total_equity,
+                total_invested_capital,
                 d_ic_ratio,
                 e_ic_ratio
             ]
@@ -117,7 +126,7 @@ if ticker:
         equity_beta = stock.info.get('beta', 'N/A')
         treasury_yield = get_10yr_treasury_yield()
         asset_beta = equity_beta * (1 / (1 + (1 - calculated_tax_rate) * (total_debt / total_equity))) if equity_beta != 'N/A' and total_equity != 0 else 'N/A'
-        debt_beta = 0.1
+        debt_beta = 0.1  # Typically assumed very low; can be updated with specific data
 
         beta_table = pd.DataFrame({
             'Metric': ['Equity Beta', 'Debt Beta (assumed)', 'Asset Beta', 'US 10-Year Treasury Yield'],
@@ -127,8 +136,8 @@ if ticker:
         st.table(beta_table)
 
         st.subheader("Expected Returns for Debt and Equity")
-        expected_return_equity = treasury_yield + (equity_beta * 0.05) if equity_beta != 'N/A' else 'N/A'
-        expected_return_debt = treasury_yield + 0.01
+        expected_return_equity = treasury_yield + (equity_beta * 0.05) if equity_beta != 'N/A' else 'N/A'  # Assuming market risk premium of 5%
+        expected_return_debt = treasury_yield + 0.01  # Assuming 1% spread over treasury yield
 
         expected_return_table = pd.DataFrame({
             'Metric': [
