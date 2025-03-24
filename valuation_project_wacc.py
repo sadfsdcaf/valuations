@@ -17,6 +17,12 @@ def fetch_stock_data(ticker):
 def format_millions(value):
     return round(value / 1_000_000, 2)
 
+def get_10yr_treasury_yield():
+    treasury_ticker = yf.Ticker("^TNX")  # ^TNX represents the CBOE 10-Year Treasury Note Yield Index
+    history = treasury_ticker.history(period="1y")
+    latest_yield = history['Close'].iloc[-1] / 100  # Convert from percent to decimal
+    return latest_yield
+
 ticker = st.text_input("Enter Ticker:", "AAPL")
 
 if ticker:
@@ -115,6 +121,19 @@ if ticker:
 
         st.subheader("Invested Capital Breakdown (Debt and Equity)")
         st.table(invested_capital_table)
+
+        st.subheader("Beta and Treasury Yield Section")
+        equity_beta = stock.info.get('beta', 'N/A')
+        treasury_yield = get_10yr_treasury_yield()
+        asset_beta = equity_beta * (1 / (1 + (1 - calculated_tax_rate) * (total_debt / total_equity))) if equity_beta != 'N/A' and total_equity != 0 else 'N/A'
+        debt_beta = 0.1  # Typically assumed very low; can be updated with specific data
+
+        beta_table = pd.DataFrame({
+            'Metric': ['Equity Beta', 'Debt Beta (assumed)', 'Asset Beta', 'US 10-Year Treasury Yield'],
+            'Value': [equity_beta, debt_beta, asset_beta, treasury_yield]
+        })
+
+        st.table(beta_table)
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
