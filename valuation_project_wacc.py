@@ -96,8 +96,7 @@ if ticker:
         total_equity = format_millions(balance_sheet.loc['Total Equity Gross Minority Interest', latest_column]) if 'Total Equity Gross Minority Interest' in balance_sheet.index else 0
         total_invested_capital = total_debt + total_equity
         d_ic_ratio = (total_debt / total_invested_capital) * 100 if total_invested_capital != 0 else 0
-        e_ic_ratio = (total_equity / total_invested_capital) * 100 if total_invested_capital != 0 else 0
-        wacc = (e_ic_ratio * cost_of_equity) + (d_ic_ratio * cost_of_debt * (1 - calculated_tax_rate))
+        e_ic_ratio = (total_equity / total_invested_capital) * 100 if total_invested_capital != 0 else 0 
         invested_capital_table = pd.DataFrame({
             'Metric': [
                 'Total Debt (M)',
@@ -106,8 +105,7 @@ if ticker:
                 'Total Equity (M)',
                 'Total Invested Capital (M)',
                 'Debt / Invested Capital (%)',
-                'Equity / Invested Capital (%)',
-                'WACC (%)'
+                'Equity / Invested Capital (%)'
                 
             ],
             'Value': [
@@ -117,8 +115,7 @@ if ticker:
                 total_equity,
                 total_invested_capital,
                 d_ic_ratio,
-                e_ic_ratio,
-                wacc
+                e_ic_ratio
             ]
         })
 
@@ -141,19 +138,21 @@ if ticker:
         st.subheader("Expected Returns for Debt and Equity")
         expected_return_equity = treasury_yield + (equity_beta * 0.05) if equity_beta != 'N/A' else 'N/A'  # Assuming market risk premium of 5%
         expected_return_debt = treasury_yield + 0.01  # Assuming 1% spread over treasury yield
-
+        wacc = (e_ic_ratio * expected_return_equity) + (d_ic_ratio * expected_return_debt * (1 - calculated_tax_rate))
         expected_return_table = pd.DataFrame({
             'Metric': [
                 'Expected Return on Equity (%)',
                 '  Formula: Treasury Yield + (Equity Beta * Market Risk Premium)',
                 'Expected Return on Debt (%)',
-                '  Formula: Treasury Yield + Credit Spread'
+                '  Formula: Treasury Yield + Credit Spread',
+                'WACC'
             ],
             'Value': [
                 expected_return_equity * 100 if expected_return_equity != 'N/A' else 'N/A',
                 'Displayed Above',
                 expected_return_debt * 100,
-                'Displayed Above'
+                'Displayed Above',
+                wacc
             ]
         })
 
