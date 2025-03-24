@@ -32,11 +32,12 @@ if ticker:
         st.write(f"Revenues: ${total_revenue:,.2f}")
         st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
         st.write(f"Gross Profit: ${gross_profit:,.2f}")
-        st.write(f"Net Income to Common Stockholders: ${net_income_to_common:,.2f}")
+
         st.write(f"Depreciation: ${depreciation:,.2f}")
         st.write(f"EBIT: ${pretax_income:,.2f}")
         st.write(f"Tax Provision (Reported): ${tax_provision_reported:,.2f}")
         st.write(f"Calculated Tax Rate (Tax Provision / Pretax Income): {calculated_tax_rate * 100:.2f}%")
+        st.write(f"Net Income to Common Stockholders: ${net_income_to_common:,.2f}")
 
 
     st.subheader("Annual Financial Statements (Last Published)")
