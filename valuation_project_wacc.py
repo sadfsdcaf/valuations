@@ -17,8 +17,14 @@ def format_millions(value):
 def display_hierarchy(financials, latest_column):
     data = []
     for metric, row in financials.iterrows():
-        indent_level = metric.count(' ') * 2  # Example indentation logic based on spaces
-        display_metric = f"{' ' * indent_level}{metric.strip()}"
+        if metric.startswith("^"):
+            display_metric = f"▶ {metric[1:].strip()}"  # Indicates collapsible header style
+        elif metric.startswith(" "):
+            indent_level = len(metric) - len(metric.lstrip())
+            display_metric = f"{' ' * indent_level}↳ {metric.strip()}"  # Child items shown with arrow and indentation
+        else:
+            display_metric = metric.strip()
+
         value = format_millions(row[latest_column])
         data.append({"Metric": display_metric, "Value (M)": value})
     return pd.DataFrame(data)
@@ -46,7 +52,6 @@ if ticker:
     if not annual_financials.empty:
         latest_column = annual_financials.columns[0]
 
-        # Financial metric retrieval with safety
         def safe_get(df, field):
             return format_millions(df.loc[field, latest_column]) if field in df.index else 0
 
@@ -60,7 +65,7 @@ if ticker:
         nopat = pretax_income * (1 - calculated_tax_rate)
 
         depreciation_amortization_depletion = safe_get(cashflow, 'Depreciation Amortization Depletion')
-        net_ppe_purchase_and_sale = abs(safe_get(cashflow, 'Net PPE Purchase And Sale'))
+        net_ppe_purchase_and_sale = safe_get(cashflow, 'Net PPE Purchase And Sale')
         change_in_working_capital = safe_get(cashflow, 'Change In Working Capital')
 
         fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
@@ -85,8 +90,7 @@ if ticker:
 
         wacc = ((e_ic_ratio * expected_return_equity) + (d_ic_ratio * expected_return_debt * (1 - calculated_tax_rate)))
 
-        # Growth calculation
-        reinvestment_rate = ((net_ppe_purchase_and_sale - depreciation_amortization_depletion ) + change_in_working_capital) / nopat if nopat else 0
+        reinvestment_rate = (net_ppe_purchase_and_sale + change_in_working_capital) / nopat if nopat else 0
         roic = nopat / total_invested_capital if total_invested_capital else 0
         growth_rate = reinvestment_rate / roic
 
@@ -95,14 +99,14 @@ if ticker:
 
         st.subheader("Summary Table")
         summary_table = pd.DataFrame({
-            'Metric': ['NOPAT (M)', 'FCF (M)', 'Total Debt (M)', 'Total Equity (M)', 'WACC', 'ROIC', 'Reinvestment Rate ', 'Growth Rate', 'Valuation (Growth)', 'Valuation (No Growth)', 'Market Cap (M)'],
-            'Value': [nopat, fcf, total_debt, total_equity, wacc, roic, reinvestment_rate, growth_rate, valuation_growth, valuation_no_growth, market_cap_millions]
+            'Metric': ['NOPAT (M)', 'FCF (M)', 'Total Debt (M)', 'Total Equity (M)', 'WACC', 'ROIC', 'Growth Rate', 'Valuation (Growth)', 'Valuation (No Growth)', 'Market Cap (M)'],
+            'Value': [nopat, fcf, total_debt, total_equity, wacc, roic, growth_rate, valuation_growth, valuation_no_growth, market_cap_millions]
         })
 
         st.table(summary_table)
 
-        st.subheader("Annual Financial Statements (Hierarchical View)")
-        st.table(display_hierarchy(annual_financials, latest_column))
+        with st.expander("Annual Financial Statements (Collapsible and Hierarchical View)"):
+            st.table(display_hierarchy(annual_financials, latest_column))
 
         st.subheader("Balance Sheet (Last Published)")
         st.write(balance_sheet)
