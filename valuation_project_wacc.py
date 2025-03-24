@@ -5,6 +5,8 @@ st.title("Last Published Annual Financial Statements with NOPAT and FCF Calculat
 
 st.markdown("""
 This tool displays the last published annual financial statements using yFinance's `financials`, `balance_sheet`, and `cashflow` attributes and includes a Free Cash Flow (FCF) section with NOPAT and working capital.
+
+**Reference metadata fields, balance sheet fields, income statement fields, and cash flow fields have been noted for this conversation.**
 """)
 
 def fetch_stock_data(ticker):
@@ -58,7 +60,7 @@ if ticker:
     st.subheader("Balance Sheet (Last Published)")
     st.write(balance_sheet)
 
-    st.subheader("Cash Flow Statement (Last Published)")
+    st.subheader("Cash Flow Statement (Last Published) - All Available Fields")
     st.write(cashflow)
 
     st.markdown("""---
