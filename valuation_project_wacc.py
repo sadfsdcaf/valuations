@@ -43,7 +43,7 @@ if ticker:
 
         st.subheader("Free Cash Flow (FCF) Calculation")
         st.write(f"NOPAT (Pretax Income * (1 - Tax Rate)): ${nopat:,.2f}")
-        st.write(f"Depreciation (for FCF): ${depreciation:,.2f}")
+        st.write(f"Depreciation): ${depreciation:,.2f}")
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
