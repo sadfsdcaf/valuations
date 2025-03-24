@@ -95,7 +95,7 @@ if ticker:
 
         wacc = ((e_ic_ratio * expected_return_equity) + (d_ic_ratio * expected_return_debt * (1 - calculated_tax_rate)))
 
-        reinvestment_rate = (net_ppe_purchase_and_sale + change_in_working_capital) / nopat if nopat else 0
+        reinvestment_rate = ((net_ppe_purchase_and_sale - depreciation_amortization_depletion) + change_in_working_capital) / nopat if nopat else 0
         roic = nopat / total_invested_capital if total_invested_capital else 0
         growth_rate = reinvestment_rate / roic
 
