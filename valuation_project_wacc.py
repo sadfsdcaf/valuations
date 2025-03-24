@@ -32,8 +32,8 @@ if ticker:
         nopat = pretax_income * (1 - calculated_tax_rate)
         gross_profit = total_revenue - cost_of_revenue
 
-        current_assets = balance_sheet.loc['Total Current Assets', latest_column] if 'Total Current Assets' in balance_sheet.index else 0
-        current_liabilities = balance_sheet.loc['Total Current Liabilities', latest_column] if 'Total Current Liabilities' in balance_sheet.index else 0
+        current_assets = balance_sheet.loc['Current Assets', latest_column] if 'Current Assets' in balance_sheet.index else 0
+        current_liabilities = balance_sheet.loc['Current Liabilities', latest_column] if 'Current Liabilities' in balance_sheet.index else 0
         working_capital = current_assets - current_liabilities
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
