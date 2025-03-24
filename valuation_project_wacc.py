@@ -41,7 +41,7 @@ if ticker:
         gross_profit = total_revenue - cost_of_revenue
 
         depreciation_amortization_depletion = format_millions(cashflow.loc['Depreciation Amortization Depletion', latest_column]) if 'Depreciation Amortization Depletion' in cashflow.index else 0
-        net_ppe_purchase_and_sale = abs(format_millions(cashflow.loc['Net PPE Purchase And Sale', latest_column])) if 'Net PPE Purchase And Sale' in cashflow.index else 0
+        net_ppe_purchase_and_sale = format_millions(cashflow.loc['Net PPE Purchase And Sale', latest_column]) if 'Net PPE Purchase And Sale' in cashflow.index else 0
         change_in_working_capital = format_millions(cashflow.loc['Change In Working Capital', latest_column]) if 'Change In Working Capital' in cashflow.index else 0
 
         accounts_receivable = format_millions(cashflow.loc['Change In Receivables', latest_column]) if 'Change In Receivables' in cashflow.index else 0
