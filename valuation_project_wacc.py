@@ -180,16 +180,19 @@ if ticker:
         st.subheader("Valuation")
         continuing_value_no_growth = nopat/wacc
         continuing_value_growth = nopat/(wacc-growth_rate)
+        valuation_variance = market_cap_millions - continuing_value_growth
         Valuation = pd.DataFrame({
             'Metric': [
                 'No Growth Perpetuity',
                 'Growth Perpetuity',
-                'Market Cap'
+                'Market Cap',
+                'Valuation Variance'
             ],
             'Value': [
                 continuing_value_no_growth if continuing_value_no_growth != 'N/A' else 'N/A',
                 continuing_value_growth if continuing_value_no_growth != 'N/A' else 'N/A',
-                market_cap if market_cap != 'N/A' else 'N/A'
+                market_cap_millions if market_cap != 'N/A' else 'N/A',
+                valuation_variance if valuation_variance != 'N/A' else 'N/A'
             ]
         })
 
