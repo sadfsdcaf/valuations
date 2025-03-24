@@ -53,7 +53,7 @@ if ticker:
         fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
 
         income_table = pd.DataFrame({
-            'Metric': ['Revenues (M)', 'Cost of Revenues (M)', 'Gross Profit (M)', 'Net Income to Common (M)', 'Depreciation (M)', 'EBIT (M)'],
+            'Metric': ['Revenues (M)', 'Cost of Revenues (M)', 'Gross Profit (M)', 'Depreciation (M)', 'EBIT (M)', 'Net Income to Common (M)'],
             'Value': [total_revenue, cost_of_revenue, gross_profit, depreciation, pretax_income, net_income_to_common]
         })
 
