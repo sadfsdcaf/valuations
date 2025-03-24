@@ -4,7 +4,7 @@ import streamlit as st
 st.title("Last Published Annual Financial Statements with NOPAT and FCF Calculation")
 
 st.markdown("""
-This tool displays the last published annual financial statements using yFinance's `financials` and `balance_sheet` attributes and includes a Free Cash Flow (FCF) section with NOPAT and working capital.
+This tool displays the last published annual financial statements using yFinance's `financials`, `balance_sheet`, and `cashflow` attributes and includes a Free Cash Flow (FCF) section with NOPAT and working capital.
 """)
 
 def fetch_stock_data(ticker):
@@ -19,6 +19,7 @@ if ticker:
     st.subheader("Key Financial Metrics from Last Published Financials")
     annual_financials = stock.financials
     balance_sheet = stock.balance_sheet
+    cashflow = stock.cashflow
 
     if not annual_financials.empty and not balance_sheet.empty:
         latest_column = annual_financials.columns[0]
@@ -65,6 +66,9 @@ if ticker:
 
     st.subheader("Balance Sheet (Last Published)")
     st.write(balance_sheet)
+
+    st.subheader("Cash Flow Statement (Last Published)")
+    st.write(cashflow)
 
     st.markdown("""---
 These statements are sourced directly from the most recently reported financial filings.
