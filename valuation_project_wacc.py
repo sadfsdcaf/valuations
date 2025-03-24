@@ -88,6 +88,9 @@ if ticker:
         total_debt = long_term_debt + current_debt
 
         total_equity = format_millions(balance_sheet.loc['Total Equity Gross Minority Interest', latest_column]) if 'Total Equity Gross Minority Interest' in balance_sheet.index else 0
+        total_invested_capital = total_debt + total_equity
+        d_ic_ratio = (total_debt / total_invested_capital) * 100 if total_invested_capital != 0 else 0
+        e_ic_ratio = (total_equity / total_invested_capital) * 100 if total_invested_capital != 0 else 0
 
         invested_capital_table = pd.DataFrame({
             'Metric': [
@@ -95,14 +98,18 @@ if ticker:
                 '  - Long Term Debt (M)',
                 '  - Current Debt (M)',
                 'Total Equity (M)',
-                'Total Invested Capital (M)'
+                'Total Invested Capital (M)',
+                'Debt / Invested Capital (%)',
+                'Equity / Invested Capital (%)'
             ],
             'Value': [
                 total_debt,
                 long_term_debt,
                 current_debt,
                 total_equity,
-                total_debt + total_equity
+                total_invested_capital,
+                d_ic_ratio,
+                e_ic_ratio
             ]
         })
 
