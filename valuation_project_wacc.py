@@ -35,7 +35,7 @@ if ticker:
         st.write(f"Gross Profit: ${gross_profit:,.2f}")
         st.write(f"Depreciation: ${depreciation:,.2f}")
         st.write(f"EBIT: ${pretax_income:,.2f}")
-        st.write(f"NNOPAT (Pretax Income * (1 - Tax Rate) ${net_income_to_common:,.2f}")
+        st.write(f"NOPAT (Pretax Income * (1 - Tax Rate)): ${net_income_to_common:,.2f}")
         st.write("### Tax Section")
         st.write(f"Tax Provision (Reported): ${tax_provision_reported:,.2f}")
         st.write(f"Calculated Tax Rate (Tax Provision / Pretax Income): {calculated_tax_rate * 100:.2f}%")
