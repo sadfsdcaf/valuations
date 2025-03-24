@@ -14,20 +14,25 @@ def fetch_stock_data(ticker):
 def format_millions(value):
     return round(value / 1_000_000, 2) if value else 0
 
-def display_hierarchy(financials, latest_column):
-    data = []
-    for metric, row in financials.iterrows():
-        if metric.startswith("^"):
-            display_metric = f"▶ {metric[1:].strip()}"  # Indicates collapsible header style
-        elif metric.startswith(" "):
-            indent_level = len(metric) - len(metric.lstrip())
-            display_metric = f"{' ' * indent_level}↳ {metric.strip()}"  # Child items shown with arrow and indentation
-        else:
-            display_metric = metric.strip()
-
-        value = format_millions(row[latest_column])
-        data.append({"Metric": display_metric, "Value (M)": value})
-    return pd.DataFrame(data)
+def display_gaap_income_statement(financials, latest_column):
+    gaap_order = [
+        "Total Revenue", "Operating Revenue", "Cost Of Revenue", "Gross Profit",
+        "Operating Expense", "Selling General and Administrative", "Research & Development",
+        "Operating Income", "Net Non Operating Interest Income Expense", "Interest Income Non Operating",
+        "Interest Expense Non Operating", "Other Income Expense", "Other Non Operating Income (Expense)",
+        "Pretax Income", "Tax Provision", "Net Income Common Stockholders", "Net Income",
+        "Net Income Including Noncontrolling Interests", "Net Income Continuous Operations",
+        "Diluted NI Available to Common Stockholders", "Basic EPS", "Diluted EPS",
+        "Basic Average Shares", "Diluted Average Shares", "Total Operating Income as Reported",
+        "Total Expenses", "Net Income from Continuing & Discontinued Operation", "Normalized Income",
+        "Interest Income", "Interest Expense", "Net Interest Income", "EBIT", "EBITDA",
+        "Reconciled Cost of Revenue", "Reconciled Depreciation",
+        "Net Income from Continuing Operation Net Minority Interest", "Normalized EBITDA", "Tax Rate for Calcs"
+    ]
+    for parent in gaap_order:
+    if parent in financials.index:
+        val = format_millions(financials.loc[parent, latest_column])
+        st.write(f"**{parent}**: {val}M")
 
 def get_10yr_treasury_yield():
     treasury_ticker = yf.Ticker("^TNX")
@@ -105,8 +110,8 @@ if ticker:
 
         st.table(summary_table)
 
-        with st.expander("Annual Financial Statements (Collapsible and Hierarchical View)"):
-            st.table(display_hierarchy(annual_financials, latest_column))
+        st.subheader("Annual Financial Statements (GAAP Structured View)")
+        display_gaap_income_statement(annual_financials, latest_column)
 
         st.subheader("Balance Sheet (Last Published)")
         st.write(balance_sheet)
