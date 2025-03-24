@@ -20,7 +20,7 @@ def format_millions(value):
 def display_hierarchy(financials, latest_column):
     data = []
         def add_row(label, value, indent=0):
-        data.append({"Metric": f"{' ' * indent}{label}", "Value": value})
+            data.append({"Metric": f"{' ' * indent}{label}", "Value": value})
 
 def get_10yr_treasury_yield():
     treasury_ticker = yf.Ticker("^TNX")  # ^TNX represents the CBOE 10-Year Treasury Note Yield Index
