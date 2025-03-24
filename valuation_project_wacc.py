@@ -198,12 +198,31 @@ if ticker:
 
         st.table(Valuation)
         
+def display_hierarchy(financials, latest_column):
+    data = []
 
+    def add_row(label, value, indent=0):
+        data.append({"Metric": f"{' ' * indent}{label}", "Value": value})
 
+    total_revenue = format_millions(financials.loc['Total Revenue', latest_column]) if 'Total Revenue' in financials.index else 0
+    operating_revenue = format_millions(financials.loc['Operating Revenue', latest_column]) if 'Operating Revenue' in financials.index else 0
+    cost_of_revenue = format_millions(financials.loc['Cost Of Revenue', latest_column]) if 'Cost Of Revenue' in financials.index else 0
+    gross_profit = format_millions(financials.loc['Gross Profit', latest_column]) if 'Gross Profit' in financials.index else 0
+    operating_expense = format_millions(financials.loc['Operating Expense', latest_column]) if 'Operating Expense' in financials.index else 0
+    sga = format_millions(financials.loc['Selling General And Administration', latest_column]) if 'Selling General And Administration' in financials.index else 0
+    rnd = format_millions(financials.loc['Research And Development', latest_column]) if 'Research And Development' in financials.index else 0
+    operating_income = format_millions(financials.loc['Operating Income', latest_column]) if 'Operating Income' in financials.index else 0
+
+    add_row("Total Revenue", total_revenue)
+    add_row("Operating Revenue", operating_revenue, 4)
+    add_row("Cost of Revenue", cost_of_revenue)
+    add_row("Gross Profit", gross_profit)
+    add_row("Operating Expense", operating_expense)
+    add_row("Selling General and Administrative", sga, 4)
+    add_row("Research & Development", rnd, 4)
+    add_row("Operating Income", operating_income)
     
-    
-    st.subheader("Annual Financial Statements (Last Published)")
-    st.write(annual_financials)
+    return pd.DataFrame(data)
 
     st.subheader("Balance Sheet (Last Published)")
     st.write(balance_sheet)
