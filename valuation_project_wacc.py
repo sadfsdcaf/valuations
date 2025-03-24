@@ -34,7 +34,7 @@ if ticker:
         nopat = pretax_income * (1 - calculated_tax_rate)
         gross_profit = total_revenue - cost_of_revenue
 
-        change_in_working_capital = cashflow.loc['Change in Working Capital', latest_column] if 'Change in Working Capital' in cashflow.index else 0
+        change_in_working_capital = cashflow.loc['Change In Working Capital', latest_column] if 'Change In Working Capital' in cashflow.index else 0
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
         st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
