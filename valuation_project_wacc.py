@@ -135,6 +135,17 @@ if ticker:
 
         st.table(beta_table)
 
+        st.subheader("Expected Returns for Debt and Equity")
+        expected_return_equity = treasury_yield + (equity_beta * 0.05) if equity_beta != 'N/A' else 'N/A'  # Assuming market risk premium of 5%
+        expected_return_debt = treasury_yield + 0.01  # Assuming 1% spread over treasury yield
+
+        expected_return_table = pd.DataFrame({
+            'Metric': ['Expected Return on Equity (%)', 'Expected Return on Debt (%)'],
+            'Value': [expected_return_equity * 100 if expected_return_equity != 'N/A' else 'N/A', expected_return_debt * 100]
+        })
+
+        st.table(expected_return_table)
+
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
 
