@@ -97,7 +97,7 @@ if ticker:
         total_invested_capital = total_debt + total_equity
         d_ic_ratio = (total_debt / total_invested_capital) * 100 if total_invested_capital != 0 else 0
         e_ic_ratio = (total_equity / total_invested_capital) * 100 if total_invested_capital != 0 else 0
-
+        wacc = (e_ic_ratio * cost_of_equity) + (d_ic_ratio * cost_of_debt * (1 - calculated_tax_rate))
         invested_capital_table = pd.DataFrame({
             'Metric': [
                 'Total Debt (M)',
@@ -106,7 +106,9 @@ if ticker:
                 'Total Equity (M)',
                 'Total Invested Capital (M)',
                 'Debt / Invested Capital (%)',
-                'Equity / Invested Capital (%)'
+                'Equity / Invested Capital (%)',
+                'WACC (%)'
+                
             ],
             'Value': [
                 total_debt,
@@ -115,7 +117,8 @@ if ticker:
                 total_equity,
                 total_invested_capital,
                 d_ic_ratio,
-                e_ic_ratio
+                e_ic_ratio,
+                wacc
             ]
         })
 
