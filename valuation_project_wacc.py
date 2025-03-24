@@ -54,7 +54,7 @@ if ticker:
 
         income_table = pd.DataFrame({
             'Metric': ['Revenues (M)', 'Cost of Revenues (M)', 'Gross Profit (M)', 'Net Income to Common (M)', 'Depreciation (M)', 'EBIT (M)'],
-            'Value': [total_revenue, cost_of_revenue, gross_profit, net_income_to_common, depreciation, pretax_income]
+            'Value': [total_revenue, cost_of_revenue, gross_profit, depreciation, pretax_income, net_income_to_common]
         })
 
         st.table(income_table)
