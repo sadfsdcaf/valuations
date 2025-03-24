@@ -140,8 +140,18 @@ if ticker:
         expected_return_debt = treasury_yield + 0.01  # Assuming 1% spread over treasury yield
 
         expected_return_table = pd.DataFrame({
-            'Metric': ['Expected Return on Equity (%)', 'Expected Return on Debt (%)'],
-            'Value': [expected_return_equity * 100 if expected_return_equity != 'N/A' else 'N/A', expected_return_debt * 100]
+            'Metric': [
+                'Expected Return on Equity (%)',
+                '  Formula: Treasury Yield + (Equity Beta * Market Risk Premium)',
+                'Expected Return on Debt (%)',
+                '  Formula: Treasury Yield + Credit Spread'
+            ],
+            'Value': [
+                expected_return_equity * 100 if expected_return_equity != 'N/A' else 'N/A',
+                'Displayed Above',
+                expected_return_debt * 100,
+                'Displayed Above'
+            ]
         })
 
         st.table(expected_return_table)
