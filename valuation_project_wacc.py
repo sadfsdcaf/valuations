@@ -37,7 +37,7 @@ if ticker:
         gross_profit = total_revenue - cost_of_revenue
 
         depreciation_amortization_depletion = cashflow.loc['Depreciation Amortization Depletion', latest_column] if 'Depreciation Amortization Depletion' in cashflow.index else 0
-        net_investment_purchase_and_sale = cashflow.loc['Net Investment Purchase And Sale', latest_column] if 'Net Investment Purchase And Sale' in cashflow.index else 0
+        net_ppe_purchase_and_sale = cashflow.loc['Net PPE Purchase And Sale', latest_column] if 'Net PPE Purchase And Sale' in cashflow.index else 0
         change_in_working_capital = cashflow.loc['Change In Working Capital', latest_column] if 'Change In Working Capital' in cashflow.index else 0
 
         fcf = nopat + depreciation_amortization_depletion - net_investment_purchase_and_sale - change_in_working_capital
@@ -56,9 +56,9 @@ if ticker:
         st.subheader("Free Cash Flow (FCF) Calculation")
         st.write(f"NOPAT (Pretax Income * (1 - Tax Rate)): ${nopat:,.2f}")
         st.write(f"Depreciation Amortization Depletion: ${depreciation_amortization_depletion:,.2f}")
-        st.write(f"Net Investment Purchase And Sale: ${net_investment_purchase_and_sale:,.2f}")
+        st.write(f"Net PPE Purchase And Sale: ${net_ppe_purchase_and_sale:,.2f}")
         st.write(f"Change in Net Working Capital (from Cash Flow Statement): ${change_in_working_capital:,.2f}")
-        st.write(f"Free Cash Flow (FCF = NOPAT + Depreciation Amortization Depletion - Net Investment Purchase And Sale - Change in Working Capital): ${fcf:,.2f}")
+        st.write(f"Free Cash Flow (FCF = NOPAT + Depreciation Amortization Depletion - Net PPE Purchase And Sale - Change in Working Capital): ${fcf:,.2f}")
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
