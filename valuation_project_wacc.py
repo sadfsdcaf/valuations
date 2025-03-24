@@ -93,8 +93,8 @@ if ticker:
 
         st.subheader("Summary Table")
         summary_table = pd.DataFrame({
-            'Metric': ['NOPAT (M)', 'FCF (M)', 'Total Debt (M)', 'Total Equity (M)', 'WACC', 'ROIC', 'Growth Rate', 'Valuation (Growth)', 'Valuation (No Growth)', 'Market Cap (M)'],
-            'Value': [nopat, fcf, total_debt, total_equity, wacc, roic, growth_rate, valuation_growth, valuation_no_growth, market_cap_millions]
+            'Metric': ['NOPAT (M)', 'FCF (M)', 'Total Debt (M)', 'Total Equity (M)', 'WACC', 'ROIC', 'Reinvestment Rate ', 'Growth Rate', 'Valuation (Growth)', 'Valuation (No Growth)', 'Market Cap (M)'],
+            'Value': [nopat, fcf, total_debt, total_equity, wacc, roic, reinvestment_rate, growth_rate, valuation_growth, valuation_no_growth, market_cap_millions]
         })
 
         st.table(summary_table)
