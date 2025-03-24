@@ -108,4 +108,4 @@ if ticker:
 
     st.markdown("""---
 These statements are sourced directly from the most recently reported financial filings.
-"")
+""")
