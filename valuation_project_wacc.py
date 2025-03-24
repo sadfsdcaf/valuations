@@ -55,6 +55,9 @@ if ticker:
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
 
+    st.subheader("Balance Sheet (Last Published)")
+    st.write(balance_sheet)
+
     st.markdown("""---
 These statements are sourced directly from the most recently reported financial filings.
 """)
