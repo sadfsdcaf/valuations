@@ -4,7 +4,7 @@ import streamlit as st
 st.title("Last Published Annual Financial Statements with NOPAT and FCF Calculation")
 
 st.markdown("""
-This tool displays the last published annual financial statements using yFinance's `financials` attribute and includes a Free Cash Flow (FCF) section with NOPAT.
+This tool displays the last published annual financial statements using yFinance's `financials` and `balance_sheet` attributes and includes a Free Cash Flow (FCF) section with NOPAT and working capital.
 """)
 
 def fetch_stock_data(ticker):
@@ -18,7 +18,9 @@ if ticker:
 
     st.subheader("Key Financial Metrics from Last Published Financials")
     annual_financials = stock.financials
-    if not annual_financials.empty:
+    balance_sheet = stock.balance_sheet
+
+    if not annual_financials.empty and not balance_sheet.empty:
         latest_column = annual_financials.columns[0]
         total_revenue = annual_financials.loc['Total Revenue', latest_column] if 'Total Revenue' in annual_financials.index else 0
         cost_of_revenue = annual_financials.loc['Cost Of Revenue', latest_column] if 'Cost Of Revenue' in annual_financials.index else 0
@@ -29,6 +31,10 @@ if ticker:
         calculated_tax_rate = (tax_provision_reported / pretax_income) if pretax_income != 0 else 0
         nopat = pretax_income * (1 - calculated_tax_rate)
         gross_profit = total_revenue - cost_of_revenue
+
+        current_assets = balance_sheet.loc['Total Current Assets', latest_column] if 'Total Current Assets' in balance_sheet.index else 0
+        current_liabilities = balance_sheet.loc['Total Current Liabilities', latest_column] if 'Total Current Liabilities' in balance_sheet.index else 0
+        working_capital = current_assets - current_liabilities
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
         st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
@@ -43,7 +49,8 @@ if ticker:
 
         st.subheader("Free Cash Flow (FCF) Calculation")
         st.write(f"NOPAT (Pretax Income * (1 - Tax Rate)): ${nopat:,.2f}")
-        st.write(f"Depreciation): ${depreciation:,.2f}")
+        st.write(f"Depreciation (for FCF): ${depreciation:,.2f}")
+        st.write(f"Working Capital (Current Assets - Current Liabilities): ${working_capital:,.2f}")
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
