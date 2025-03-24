@@ -17,8 +17,10 @@ def format_millions(value):
 def display_hierarchy(financials, latest_column):
     data = []
     for metric, row in financials.iterrows():
+        indent_level = metric.count(' ') * 2  # Example indentation logic based on spaces
+        display_metric = f"{' ' * indent_level}{metric.strip()}"
         value = format_millions(row[latest_column])
-        data.append({"Metric": metric, "Value (M)": value})
+        data.append({"Metric": display_metric, "Value (M)": value})
     return pd.DataFrame(data)
 
 def get_10yr_treasury_yield():
