@@ -138,7 +138,7 @@ if ticker:
         st.subheader("Expected Returns for Debt and Equity")
         expected_return_equity = treasury_yield + (equity_beta * 0.05) if equity_beta != 'N/A' else 'N/A'  # Assuming market risk premium of 5%
         expected_return_debt = treasury_yield + 0.01  # Assuming 1% spread over treasury yield
-        wacc = (e_ic_ratio * expected_return_equity) + (d_ic_ratio * expected_return_debt * (1 - calculated_tax_rate))
+        wacc = ((e_ic_ratio * expected_return_equity) + (d_ic_ratio * expected_return_debt * (1 - calculated_tax_rate)))/100
         expected_return_table = pd.DataFrame({
             'Metric': [
                 'Expected Return on Equity (%)',
