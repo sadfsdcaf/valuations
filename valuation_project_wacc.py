@@ -164,7 +164,7 @@ if ticker:
             ],
             'Value': [
                 continuing_value_no_growth if continuing_value_no_growth != 'N/A' else 'N/A',
-                continuing_value_no_growth if continuing_value_no_growth != 'N/A' else 'N/A'
+                continuing_value_growth if continuing_value_no_growth != 'N/A' else 'N/A'
             ]
         })
 
