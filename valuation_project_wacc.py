@@ -36,10 +36,11 @@ if ticker:
         nopat = pretax_income * (1 - calculated_tax_rate)
         gross_profit = total_revenue - cost_of_revenue
 
+        depreciation_amortization_depletion = cashflow.loc['Depreciation Amortization Depletion', latest_column] if 'Depreciation Amortization Depletion' in cashflow.index else 0
+        net_investment_purchase_and_sale = cashflow.loc['Net Investment Purchase And Sale', latest_column] if 'Net Investment Purchase And Sale' in cashflow.index else 0
         change_in_working_capital = cashflow.loc['Change In Working Capital', latest_column] if 'Change In Working Capital' in cashflow.index else 0
-        net_ppe = balance_sheet.loc['Net PPE', latest_column] if 'Net PPE' in balance_sheet.index else 0
-        cash_flow_from_operating_activities = cashflow.loc['Cash Flow From Continuing Operating Activities', latest_column] if 'Cash Flow From Continuing Operating Activities' in cashflow.index else 0
-        fcf = nopat - net_ppe - change_in_working_capital
+
+        fcf = nopat + depreciation_amortization_depletion - net_investment_purchase_and_sale - change_in_working_capital
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
         st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
@@ -54,10 +55,10 @@ if ticker:
 
         st.subheader("Free Cash Flow (FCF) Calculation")
         st.write(f"NOPAT (Pretax Income * (1 - Tax Rate)): ${nopat:,.2f}")
-        st.write(f"Net PPE: ${net_ppe:,.2f}")
+        st.write(f"Depreciation Amortization Depletion: ${depreciation_amortization_depletion:,.2f}")
+        st.write(f"Net Investment Purchase And Sale: ${net_investment_purchase_and_sale:,.2f}")
         st.write(f"Change in Net Working Capital (from Cash Flow Statement): ${change_in_working_capital:,.2f}")
-        st.write(f"Cash Flow From Continuing Operating Activities: ${cash_flow_from_operating_activities:,.2f}")
-        st.write(f"Free Cash Flow (FCF = NOPAT - Net PPE - Change in Working Capital): ${fcf:,.2f}")
+        st.write(f"Free Cash Flow (FCF = NOPAT + Depreciation Amortization Depletion - Net Investment Purchase And Sale - Change in Working Capital): ${fcf:,.2f}")
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
