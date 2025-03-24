@@ -142,16 +142,12 @@ if ticker:
         expected_return_table = pd.DataFrame({
             'Metric': [
                 'Expected Return on Equity (%)',
-                '  Formula: Treasury Yield + (Equity Beta * Market Risk Premium)',
                 'Expected Return on Debt (%)',
-                '  Formula: Treasury Yield + Credit Spread',
                 'WACC'
             ],
             'Value': [
                 expected_return_equity * 100 if expected_return_equity != 'N/A' else 'N/A',
-                'Displayed Above',
                 expected_return_debt * 100,
-                'Displayed Above',
                 wacc
             ]
         })
