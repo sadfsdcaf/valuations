@@ -84,11 +84,29 @@ if ticker:
         st.table(wc_breakdown_table)
 
         total_debt = format_millions(balance_sheet.loc['Total Debt', latest_column]) if 'Total Debt' in balance_sheet.index else 0
+        long_term_debt = format_millions(balance_sheet.loc['Long Term Debt', latest_column]) if 'Long Term Debt' in balance_sheet.index else 0
+        current_debt = format_millions(balance_sheet.loc['Current Debt', latest_column]) if 'Current Debt' in balance_sheet.index else 0
+        other_non_current_liabilities = format_millions(balance_sheet.loc['Other Non Current Liabilities', latest_column]) if 'Other Non Current Liabilities' in balance_sheet.index else 0
+
         total_equity = format_millions(balance_sheet.loc['Total Equity Gross Minority Interest', latest_column]) if 'Total Equity Gross Minority Interest' in balance_sheet.index else 0
 
         invested_capital_table = pd.DataFrame({
-            'Metric': ['Total Debt (M)', 'Total Equity (M)', 'Total Invested Capital (M)'],
-            'Value': [total_debt, total_equity, total_debt + total_equity]
+            'Metric': [
+                'Total Debt (M)',
+                '  - Long Term Debt (M)',
+                '  - Current Debt (M)',
+                '  - Other Non Current Liabilities (M)',
+                'Total Equity (M)',
+                'Total Invested Capital (M)'
+            ],
+            'Value': [
+                total_debt,
+                long_term_debt,
+                current_debt,
+                other_non_current_liabilities,
+                total_equity,
+                total_debt + total_equity
+            ]
         })
 
         st.subheader("Invested Capital Breakdown (Debt and Equity)")
