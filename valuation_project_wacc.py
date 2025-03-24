@@ -58,42 +58,103 @@ if ticker:
 
         fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
 
+        income_table = pd.DataFrame({
+            'Metric': ['Revenues (M)', 'Cost of Revenues (M)', 'Gross Profit (M)', 'Net Income to Common (M)', 'Depreciation (M)', 'EBIT (M)'],
+            'Value': [total_revenue, cost_of_revenue, gross_profit, net_income_to_common, depreciation, pretax_income]
+        })
+
+        st.table(income_table)
+
+        tax_table = pd.DataFrame({
+            'Metric': ['Tax Provision (M)', 'Calculated Tax Rate (%)'],
+            'Value': [tax_provision_reported, round(calculated_tax_rate * 100, 2)]
+        })
+
+        st.subheader("Tax Section")
+        st.table(tax_table)
+
+        fcf_table = pd.DataFrame({
+            'Metric': ['NOPAT (M)', 'Depreciation Amortization Depletion (M)', 'Net PPE Purchase And Sale (M)', 'Change in Net Working Capital (M)', 'Free Cash Flow (M)'],
+            'Value': [nopat, depreciation_amortization_depletion, net_ppe_purchase_and_sale, change_in_working_capital, fcf]
+        })
+
+        st.subheader("Free Cash Flow (FCF) Calculation")
+        st.table(fcf_table)
+
+        wc_breakdown_table = pd.DataFrame({
+            'Metric': ['Change in Receivables (M)', 'Change in Inventory (M)', 'Change in Other Current Assets (M)', 'Change in Payables (M)', 'Change in Other Current Liabilities (M)'],
+            'Value': [accounts_receivable, inventories, other_assets, accounts_payable, other_liabilities]
+        })
+
+        st.subheader("Breakdown of Changes in Working Capital")
+        st.table(wc_breakdown_table)
+
         long_term_debt = format_millions(balance_sheet.loc['Long Term Debt', latest_column]) if 'Long Term Debt' in balance_sheet.index else 0
         current_debt = format_millions(balance_sheet.loc['Current Debt', latest_column]) if 'Current Debt' in balance_sheet.index else 0
         total_debt = long_term_debt + current_debt
 
         total_equity = format_millions(balance_sheet.loc['Total Equity Gross Minority Interest', latest_column]) if 'Total Equity Gross Minority Interest' in balance_sheet.index else 0
         total_invested_capital = total_debt + total_equity
-        d_ic_ratio = (total_debt / total_invested_capital) if total_invested_capital != 0 else 0
-        e_ic_ratio = (total_equity / total_invested_capital) if total_invested_capital != 0 else 0
+        d_ic_ratio = (total_debt / total_invested_capital) * 100 if total_invested_capital != 0 else 0
+        e_ic_ratio = (total_equity / total_invested_capital) * 100 if total_invested_capital != 0 else 0
 
-        equity_beta = stock.info.get('beta', 1.0)
-        treasury_yield = get_10yr_treasury_yield()
-        market_risk_premium = 0.05
-        cost_of_equity = treasury_yield + (equity_beta * market_risk_premium)
-        cost_of_debt = treasury_yield + 0.01
-
-        wacc = (e_ic_ratio * cost_of_equity) + (d_ic_ratio * cost_of_debt * (1 - 0.21))
-
-        st.subheader("WACC Calculation")
-        wacc_table = pd.DataFrame({
+        invested_capital_table = pd.DataFrame({
             'Metric': [
-                'Cost of Equity (%)',
-                'Formula: Treasury Yield + (Equity Beta * Market Risk Premium)',
-                'Cost of Debt (%)',
-                'Formula: Treasury Yield + Credit Spread',
-                'WACC (%)'
+                'Total Debt (M)',
+                '  - Long Term Debt (M)',
+                '  - Current Debt (M)',
+                'Total Equity (M)',
+                'Total Invested Capital (M)',
+                'Debt / Invested Capital (%)',
+                'Equity / Invested Capital (%)'
             ],
             'Value': [
-                cost_of_equity * 100,
-                'Displayed Above',
-                cost_of_debt * 100,
-                'Displayed Above',
-                wacc * 100
+                total_debt,
+                long_term_debt,
+                current_debt,
+                total_equity,
+                total_invested_capital,
+                d_ic_ratio,
+                e_ic_ratio
             ]
         })
 
-        st.table(wacc_table)
+        st.subheader("Invested Capital Breakdown (Debt and Equity)")
+        st.table(invested_capital_table)
+
+        st.subheader("Beta and Treasury Yield Section")
+        equity_beta = stock.info.get('beta', 'N/A')
+        treasury_yield = get_10yr_treasury_yield()
+        asset_beta = equity_beta * (1 / (1 + (1 - calculated_tax_rate) * (total_debt / total_equity))) if equity_beta != 'N/A' and total_equity != 0 else 'N/A'
+        debt_beta = 0.1  # Typically assumed very low; can be updated with specific data
+
+        beta_table = pd.DataFrame({
+            'Metric': ['Equity Beta', 'Debt Beta (assumed)', 'Asset Beta', 'US 10-Year Treasury Yield'],
+            'Value': [equity_beta, debt_beta, asset_beta, treasury_yield]
+        })
+
+        st.table(beta_table)
+
+        st.subheader("Expected Returns for Debt and Equity")
+        expected_return_equity = treasury_yield + (equity_beta * 0.05) if equity_beta != 'N/A' else 'N/A'  # Assuming market risk premium of 5%
+        expected_return_debt = treasury_yield + 0.01  # Assuming 1% spread over treasury yield
+
+        expected_return_table = pd.DataFrame({
+            'Metric': [
+                'Expected Return on Equity (%)',
+                '  Formula: Treasury Yield + (Equity Beta * Market Risk Premium)',
+                'Expected Return on Debt (%)',
+                '  Formula: Treasury Yield + Credit Spread'
+            ],
+            'Value': [
+                expected_return_equity * 100 if expected_return_equity != 'N/A' else 'N/A',
+                'Displayed Above',
+                expected_return_debt * 100,
+                'Displayed Above'
+            ]
+        })
+
+        st.table(expected_return_table)
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
@@ -107,3 +168,6 @@ if ticker:
     st.markdown("""---
 These statements are sourced directly from the most recently reported financial filings.
 """)
+
+
+this is our latest version. Lets add a section and calculate wacc
