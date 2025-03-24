@@ -17,6 +17,9 @@ def fetch_stock_data(ticker):
 def format_millions(value):
     return round(value / 1_000_000, 2)
 
+def display_hierarchy(financials, latest_column):
+    data = []
+
 def get_10yr_treasury_yield():
     treasury_ticker = yf.Ticker("^TNX")  # ^TNX represents the CBOE 10-Year Treasury Note Yield Index
     history = treasury_ticker.history(period="1y")
@@ -198,9 +201,6 @@ if ticker:
 
         st.table(Valuation)
         
-def display_hierarchy(financials, latest_column):
-    data = []
-
     def add_row(label, value, indent=0):
         data.append({"Metric": f"{' ' * indent}{label}", "Value": value})
 
@@ -224,15 +224,16 @@ def display_hierarchy(financials, latest_column):
     
     return pd.DataFrame(data)
 
-    st.subheader("Balance Sheet (Last Published)")
-    st.write(balance_sheet)
+st.subheader("Balance Sheet (Last Published)")
+st.write(stock.balance_sheet)
 
-    st.subheader("Cash Flow Statement (Last Published) - All Available Fields")
-    st.write(cashflow)
+st.subheader("Cash Flow Statement (Last Published) - All Available Fields")
+st.write(stock.cashflow)
 
-    st.markdown("""---
+st.markdown("""---
 These statements are sourced directly from the most recently reported financial filings.
 """)
+
 
 
 
