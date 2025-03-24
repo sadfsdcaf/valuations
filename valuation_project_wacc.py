@@ -16,34 +16,18 @@ def format_millions(value):
 
 def display_hierarchy(financials, latest_column):
     data = []
-    hierarchy_mapping = [
-        {"parent": "Total Revenue", "children": ["Operating Revenue"]},
-        {"parent": "Operating Expense", "children": ["Selling General and Administrative", "Research & Development"]},
-        {"parent": "Net Non Operating Interest Income Expense", "children": ["Interest Income Non Operating", "Interest Expense Non Operating"]},
-        {"parent": "Other Income Expense", "children": ["Other Non Operating Income (Expense)"]},
-        {"parent": "Net Income Common Stockholders", "children": ["Net Income", "Net Income Including Noncontrolling Interests", "Net Income Continuous Operations"]}
-    ]
-
-    displayed_parents = set()
     for metric, row in financials.iterrows():
-        matched_parent = next((item for item in hierarchy_mapping if item['parent'] == metric), None)
+        if metric.startswith("^"):
+            display_metric = f"▶ {metric[1:].strip()}"  # Indicates collapsible header style
+        elif metric.startswith(" "):
+            indent_level = len(metric) - len(metric.lstrip())
+            display_metric = f"{' ' * indent_level}↳ {metric.strip()}"  # Child items shown with arrow and indentation
+        else:
+            display_metric = metric.strip()
 
-        if matched_parent and metric not in displayed_parents:
-            with st.expander(f"{matched_parent['parent']}"):
-                st.write(f"**{matched_parent['parent']}**: {format_millions(row[latest_column])}M")
-                for child in matched_parent['children']:
-                    if child in financials.index:
-                        val = format_millions(financials.loc[child, latest_column])
-                        st.write(f"➡️ {child}: {val}M")
-                displayed_parents.add(metric)
-        elif not any(metric == parent['parent'] or metric in parent['children'] for parent in hierarchy_mapping):
-            val = format_millions(row[latest_column])
-            data.append({"Metric": metric, "Value (M)": val})
-
-    if data:
-        st.write("**Other Financial Metrics:**")
-        df = pd.DataFrame(data)
-        st.table(df)
+        value = format_millions(row[latest_column])
+        data.append({"Metric": display_metric, "Value (M)": value})
+    return pd.DataFrame(data)
 
 def get_10yr_treasury_yield():
     treasury_ticker = yf.Ticker("^TNX")
@@ -121,8 +105,8 @@ if ticker:
 
         st.table(summary_table)
 
-        with st.expander("Annual Financial Statements (Nested Collapsible View)"):
-            display_hierarchy(annual_financials, latest_column)
+        with st.expander("Annual Financial Statements (Collapsible and Hierarchical View)"):
+            st.table(display_hierarchy(annual_financials, latest_column))
 
         st.subheader("Balance Sheet (Last Published)")
         st.write(balance_sheet)
