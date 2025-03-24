@@ -49,7 +49,7 @@ if ticker:
         depreciation_amortization_depletion = format_millions(cashflow.loc['Depreciation Amortization Depletion', latest_column]) if 'Depreciation Amortization Depletion' in cashflow.index else 0
         net_ppe_purchase_and_sale = abs(format_millions(cashflow.loc['Net PPE Purchase And Sale', latest_column])) if 'Net PPE Purchase And Sale' in cashflow.index else 0
         change_in_working_capital = format_millions(cashflow.loc['Change In Working Capital', latest_column]) if 'Change In Working Capital' in cashflow.index else 0
-
+        
         accounts_receivable = format_millions(cashflow.loc['Change In Receivables', latest_column]) if 'Change In Receivables' in cashflow.index else 0
         inventories = format_millions(cashflow.loc['Change In Inventory', latest_column]) if 'Change In Inventory' in cashflow.index else 0
         other_assets = format_millions(cashflow.loc['Change In Other Current Assets', latest_column]) if 'Change In Other Current Assets' in cashflow.index else 0
@@ -57,7 +57,7 @@ if ticker:
         other_liabilities = format_millions(cashflow.loc['Change In Other Current Liabilities', latest_column]) if 'Change In Other Current Liabilities' in cashflow.index else 0
 
         fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
-
+        change_in_invested_capital = (net_ppe_purchase_and_sale - depreciation_amortization_depletion) + change_in_working_capital
         income_table = pd.DataFrame({
             'Metric': ['Revenues (M)', 'Cost of Revenues (M)', 'Gross Profit (M)', 'Net Income to Common (M)', 'Depreciation (M)', 'EBIT (M)'],
             'Value': [total_revenue, cost_of_revenue, gross_profit, net_income_to_common, depreciation, pretax_income]
@@ -153,10 +153,31 @@ if ticker:
         })
 
         st.table(expected_return_table)
+
+        st.subheader("Growth Metrics")
+        roic = nopat/total_invested_capital
+        reinvestment_rate = change_in_invested_capital / nopat
+        growth_rate = reinvestment_rate / roic
+        growth_metrics = pd.DataFrame({
+            'Metric': [
+                'Return on Invested Capital',
+                'Reinvestment Rate',
+                'Growth Rate'
+            ],
+            'Value': [
+                roic if roic != 'N/A' else 'N/A',
+                reinvestment_rate if reinvestment_rate != 'N/A' else 'N/A',
+                growth_rate if growth_rate != 'N/A' else 'N/A'
+            ]
+        })
+
+        st.table(growth_metrics)
+
+
         
         st.subheader("Valuation")
         continuing_value_no_growth = nopat/wacc
-        continuing_value_growth = nopat/(wacc-.03)
+        continuing_value_growth = nopat/(wacc-growth_rate)
         Valuation = pd.DataFrame({
             'Metric': [
                 'No Growth Perpetuity',
@@ -169,6 +190,10 @@ if ticker:
         })
 
         st.table(Valuation)
+        
+
+
+    
     
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
