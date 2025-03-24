@@ -27,6 +27,8 @@ ticker = st.text_input("Enter Ticker:", "AAPL")
 
 if ticker:
     stock = fetch_stock_data(ticker)
+    market_cap = stock.info.get('marketCap', 'Not Available')
+    market_cap_millions = market_cap / 1_000_000 if market_cap != 'Not Available' else 'Not Available'
 
     st.subheader("Key Financial Metrics from Last Published Financials")
     annual_financials = stock.financials
@@ -182,10 +184,12 @@ if ticker:
             'Metric': [
                 'No Growth Perpetuity',
                 'Growth Perpetuity',
+                'Market Cap'
             ],
             'Value': [
                 continuing_value_no_growth if continuing_value_no_growth != 'N/A' else 'N/A',
                 continuing_value_growth if continuing_value_no_growth != 'N/A' else 'N/A'
+                market_cap if market_cap != 'N/A' else 'N/A'
             ]
         })
 
