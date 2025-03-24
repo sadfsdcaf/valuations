@@ -1,10 +1,10 @@
 import yfinance as yf
 import streamlit as st
 
-st.title("Last Published Annual Financial Statements with NOPAT Calculation")
+st.title("Last Published Annual Financial Statements with NOPAT and FCF Calculation")
 
 st.markdown("""
-This tool displays the last published annual financial statements using yFinance's `financials` attribute and calculates NOPAT.
+This tool displays the last published annual financial statements using yFinance's `financials` attribute and includes a Free Cash Flow (FCF) section with NOPAT.
 """)
 
 def fetch_stock_data(ticker):
@@ -33,12 +33,17 @@ if ticker:
         st.write(f"Revenues: ${total_revenue:,.2f}")
         st.write(f"Cost of Revenues: ${cost_of_revenue:,.2f}")
         st.write(f"Gross Profit: ${gross_profit:,.2f}")
+        st.write(f"Net Income to Common Stockholders: ${net_income_to_common:,.2f}")
         st.write(f"Depreciation: ${depreciation:,.2f}")
         st.write(f"EBIT: ${pretax_income:,.2f}")
-        st.write(f"NOPAT (Pretax Income * (1 - Tax Rate)): ${net_income_to_common:,.2f}")
+
         st.write("### Tax Section")
         st.write(f"Tax Provision (Reported): ${tax_provision_reported:,.2f}")
         st.write(f"Calculated Tax Rate (Tax Provision / Pretax Income): {calculated_tax_rate * 100:.2f}%")
+
+        st.subheader("Free Cash Flow (FCF) Calculation")
+        st.write(f"NOPAT (Pretax Income * (1 - Tax Rate)): ${nopat:,.2f}")
+        st.write(f"Depreciation (for FCF): ${depreciation:,.2f}")
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
