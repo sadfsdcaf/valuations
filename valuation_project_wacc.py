@@ -2,7 +2,7 @@ import yfinance as yf
 import streamlit as st
 import pandas as pd
 
-st.title("Last Published Annual Financial Statements with NOPAT, FCF, Invested Capital Breakdown, and WACC Calculation")
+st.title("Last Published Annual Financial Statements with NOPAT, FCF, and Invested Capital Breakdown")
 
 st.markdown("""
 This tool displays the last published annual financial statements using yFinance's `financials`, `balance_sheet`, and `cashflow` attributes and includes a Free Cash Flow (FCF) section with NOPAT and working capital.
@@ -36,6 +36,28 @@ if ticker:
     if not annual_financials.empty and not balance_sheet.empty and not cashflow.empty:
         latest_column = annual_financials.columns[0]
 
+        total_revenue = format_millions(annual_financials.loc['Total Revenue', latest_column]) if 'Total Revenue' in annual_financials.index else 0
+        cost_of_revenue = format_millions(annual_financials.loc['Cost Of Revenue', latest_column]) if 'Cost Of Revenue' in annual_financials.index else 0
+        depreciation = format_millions(annual_financials.loc['Reconciled Depreciation', latest_column]) if 'Reconciled Depreciation' in annual_financials.index else 0
+        pretax_income = format_millions(annual_financials.loc['Pretax Income', latest_column]) if 'Pretax Income' in annual_financials.index else 0
+        tax_provision_reported = format_millions(annual_financials.loc['Tax Provision', latest_column]) if 'Tax Provision' in annual_financials.index else 0
+        net_income_to_common = format_millions(annual_financials.loc['Net Income Common Stockholders', latest_column]) if 'Net Income Common Stockholders' in annual_financials.index else 0
+        calculated_tax_rate = (tax_provision_reported / pretax_income) if pretax_income != 0 else 0
+        nopat = pretax_income * (1 - calculated_tax_rate)
+        gross_profit = total_revenue - cost_of_revenue
+
+        depreciation_amortization_depletion = format_millions(cashflow.loc['Depreciation Amortization Depletion', latest_column]) if 'Depreciation Amortization Depletion' in cashflow.index else 0
+        net_ppe_purchase_and_sale = abs(format_millions(cashflow.loc['Net PPE Purchase And Sale', latest_column])) if 'Net PPE Purchase And Sale' in cashflow.index else 0
+        change_in_working_capital = format_millions(cashflow.loc['Change In Working Capital', latest_column]) if 'Change In Working Capital' in cashflow.index else 0
+
+        accounts_receivable = format_millions(cashflow.loc['Change In Receivables', latest_column]) if 'Change In Receivables' in cashflow.index else 0
+        inventories = format_millions(cashflow.loc['Change In Inventory', latest_column]) if 'Change In Inventory' in cashflow.index else 0
+        other_assets = format_millions(cashflow.loc['Change In Other Current Assets', latest_column]) if 'Change In Other Current Assets' in cashflow.index else 0
+        accounts_payable = format_millions(cashflow.loc['Change In Payable', latest_column]) if 'Change In Payable' in cashflow.index else 0
+        other_liabilities = format_millions(cashflow.loc['Change In Other Current Liabilities', latest_column]) if 'Change In Other Current Liabilities' in cashflow.index else 0
+
+        fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
+
         long_term_debt = format_millions(balance_sheet.loc['Long Term Debt', latest_column]) if 'Long Term Debt' in balance_sheet.index else 0
         current_debt = format_millions(balance_sheet.loc['Current Debt', latest_column]) if 'Current Debt' in balance_sheet.index else 0
         total_debt = long_term_debt + current_debt
@@ -45,39 +67,15 @@ if ticker:
         d_ic_ratio = (total_debt / total_invested_capital) if total_invested_capital != 0 else 0
         e_ic_ratio = (total_equity / total_invested_capital) if total_invested_capital != 0 else 0
 
-        invested_capital_table = pd.DataFrame({
-            'Metric': [
-                'Total Debt (M)',
-                '   - Long Term Debt (M)',
-                '   - Current Debt (M)',
-                'Total Equity (M)',
-                'Total Invested Capital (M)',
-                'Debt / Invested Capital (%)',
-                'Equity / Invested Capital (%)'
-            ],
-            'Value': [
-                total_debt,
-                long_term_debt,
-                current_debt,
-                total_equity,
-                total_invested_capital,
-                d_ic_ratio * 100,
-                e_ic_ratio * 100
-            ]
-        })
-
-        st.subheader("Invested Capital Breakdown (Debt and Equity)")
-        st.table(invested_capital_table)
-
-        st.subheader("WACC Calculation")
         equity_beta = stock.info.get('beta', 1.0)
         treasury_yield = get_10yr_treasury_yield()
-        market_risk_premium = 0.05  # assumed market risk premium
-        cost_of_equity = treasury_yield + equity_beta * market_risk_premium
-        cost_of_debt = treasury_yield + 0.01  # assumed debt premium
+        market_risk_premium = 0.05
+        cost_of_equity = treasury_yield + (equity_beta * market_risk_premium)
+        cost_of_debt = treasury_yield + 0.01
 
-        wacc = (e_ic_ratio * cost_of_equity) + (d_ic_ratio * cost_of_debt * (1 - 0.21))  # assume 21% tax rate
+        wacc = (e_ic_ratio * cost_of_equity) + (d_ic_ratio * cost_of_debt * (1 - 0.21))
 
+        st.subheader("WACC Calculation")
         wacc_table = pd.DataFrame({
             'Metric': [
                 'Cost of Equity (%)',
