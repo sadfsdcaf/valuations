@@ -40,6 +40,12 @@ if ticker:
         net_ppe_purchase_and_sale = cashflow.loc['Net PPE Purchase And Sale', latest_column] if 'Net PPE Purchase And Sale' in cashflow.index else 0
         change_in_working_capital = cashflow.loc['Change In Working Capital', latest_column] if 'Change In Working Capital' in cashflow.index else 0
 
+        accounts_receivable = cashflow.loc['Change In Receivables', latest_column] if 'Change In Receivables' in cashflow.index else 0
+        inventories = cashflow.loc['Change In Inventory', latest_column] if 'Change In Inventory' in cashflow.index else 0
+        other_assets = cashflow.loc['Change In Other Current Assets', latest_column] if 'Change In Other Current Assets' in cashflow.index else 0
+        accounts_payable = cashflow.loc['Change In Payable', latest_column] if 'Change In Payable' in cashflow.index else 0
+        other_liabilities = cashflow.loc['Change In Other Current Liabilities', latest_column] if 'Change In Other Current Liabilities' in cashflow.index else 0
+
         fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
 
         st.write(f"Revenues: ${total_revenue:,.2f}")
@@ -59,6 +65,13 @@ if ticker:
         st.write(f"Net PPE Purchase And Sale: ${net_ppe_purchase_and_sale:,.2f}")
         st.write(f"Change in Net Working Capital (from Cash Flow Statement): ${change_in_working_capital:,.2f}")
         st.write(f"Free Cash Flow (FCF = NOPAT + Depreciation Amortization Depletion - Net PPE Purchase And Sale - Change in Working Capital): ${fcf:,.2f}")
+
+        st.subheader("Breakdown of Changes in Working Capital")
+        st.write(f"Accounts Receivable, Net: ${accounts_receivable:,.2f}")
+        st.write(f"Inventories: ${inventories:,.2f}")
+        st.write(f"Other Current and Non-current Assets: ${other_assets:,.2f}")
+        st.write(f"Accounts Payable: ${accounts_payable:,.2f}")
+        st.write(f"Other Current and Non-current Liabilities: ${other_liabilities:,.2f}")
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
