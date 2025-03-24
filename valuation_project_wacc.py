@@ -2,7 +2,7 @@ import yfinance as yf
 import streamlit as st
 import pandas as pd
 
-st.title("Last Published Annual Financial Statements with NOPAT and FCF Calculation")
+st.title("Last Published Annual Financial Statements with NOPAT, FCF, and Invested Capital Breakdown")
 
 st.markdown("""
 This tool displays the last published annual financial statements using yFinance's `financials`, `balance_sheet`, and `cashflow` attributes and includes a Free Cash Flow (FCF) section with NOPAT and working capital.
@@ -41,7 +41,7 @@ if ticker:
         gross_profit = total_revenue - cost_of_revenue
 
         depreciation_amortization_depletion = format_millions(cashflow.loc['Depreciation Amortization Depletion', latest_column]) if 'Depreciation Amortization Depletion' in cashflow.index else 0
-        net_ppe_purchase_and_sale = format_millions(cashflow.loc['Net PPE Purchase And Sale', latest_column]) if 'Net PPE Purchase And Sale' in cashflow.index else 0
+        net_ppe_purchase_and_sale = abs(format_millions(cashflow.loc['Net PPE Purchase And Sale', latest_column])) if 'Net PPE Purchase And Sale' in cashflow.index else 0
         change_in_working_capital = format_millions(cashflow.loc['Change In Working Capital', latest_column]) if 'Change In Working Capital' in cashflow.index else 0
 
         accounts_receivable = format_millions(cashflow.loc['Change In Receivables', latest_column]) if 'Change In Receivables' in cashflow.index else 0
@@ -53,8 +53,8 @@ if ticker:
         fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
 
         income_table = pd.DataFrame({
-            'Metric': ['Revenues (M)', 'Cost of Revenues (M)', 'Gross Profit (M)', 'Depreciation (M)', 'EBIT (M)', 'Net Income to Common (M)'],
-            'Value': [total_revenue, cost_of_revenue, gross_profit, depreciation, pretax_income, net_income_to_common]
+            'Metric': ['Revenues (M)', 'Cost of Revenues (M)', 'Gross Profit (M)', 'Net Income to Common (M)', 'Depreciation (M)', 'EBIT (M)'],
+            'Value': [total_revenue, cost_of_revenue, gross_profit, net_income_to_common, depreciation, pretax_income]
         })
 
         st.table(income_table)
@@ -82,6 +82,17 @@ if ticker:
 
         st.subheader("Breakdown of Changes in Working Capital")
         st.table(wc_breakdown_table)
+
+        total_debt = format_millions(balance_sheet.loc['Total Debt', latest_column]) if 'Total Debt' in balance_sheet.index else 0
+        total_equity = format_millions(balance_sheet.loc['Total Equity Gross Minority Interest', latest_column]) if 'Total Equity Gross Minority Interest' in balance_sheet.index else 0
+
+        invested_capital_table = pd.DataFrame({
+            'Metric': ['Total Debt (M)', 'Total Equity (M)', 'Total Invested Capital (M)'],
+            'Value': [total_debt, total_equity, total_debt + total_equity]
+        })
+
+        st.subheader("Invested Capital Breakdown (Debt and Equity)")
+        st.table(invested_capital_table)
 
     st.subheader("Annual Financial Statements (Last Published)")
     st.write(annual_financials)
