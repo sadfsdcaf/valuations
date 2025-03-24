@@ -30,9 +30,9 @@ def display_gaap_income_statement(financials, latest_column):
         "Net Income from Continuing Operation Net Minority Interest", "Normalized EBITDA", "Tax Rate for Calcs"
     ]
     for parent in gaap_order:
-    if parent in financials.index:
-        val = format_millions(financials.loc[parent, latest_column])
-        st.write(f"**{parent}**: {val}M")
+        if parent in financials.index:
+            val = format_millions(financials.loc[parent, latest_column])
+            st.write(f"**{parent}**: {val}M")
 
 def get_10yr_treasury_yield():
     treasury_ticker = yf.Ticker("^TNX")
