@@ -111,19 +111,19 @@ if ticker:
         st.subheader("Cash Flow (M)")
         st.dataframe(cf.applymap(format_millions))
 
-        # Key Financials last 3 yrs
-        st.subheader("Key Financials (M) — Last 3 Years")
-        mets=["Total Revenue","Gross Profit","EBIT","EBITDA"]
-        c3 = fin.columns[:3]
-        kdf = fin.reindex(mets).loc[:,c3].applymap(format_millions)
-        yrs = [pd.to_datetime(c).year for c in c3][::-1]
+        # Key Financials last 5 yrs
+        st.subheader("Key Financials (M) — Last 5 Years")
+        mets   = ["Total Revenue","Gross Profit","EBIT","EBITDA"]
+        last5  = fin.columns[:5]                                 # grabs the 5 most recent columns
+        kdf    = fin.reindex(mets).loc[:, last5].applymap(format_millions)
+        yrs    = [pd.to_datetime(c).year for c in last5][::-1]   # reverse so oldest → newest
         kdf.columns = yrs
         st.table(kdf)
-
-        # YoY Growth
-        st.subheader("YoY Growth (%)")
-        gdf = kdf.pct_change(axis=1).iloc[:,1:]*100
-        gdf.columns = [f"{b} vs {a}" for a,b in zip(yrs[:-1], yrs[1:])]
+        
+        # YoY Growth for those five years (yields four growth columns)
+        st.subheader("Year‑over‑Year Growth (%)")
+        gdf = kdf.pct_change(axis=1).iloc[:, 1:] * 100
+        gdf.columns = [f"{c2} vs {c1}" for c1, c2 in zip(yrs[:-1], yrs[1:])]
         st.table(gdf)
 
         # Working Capital & CCC
