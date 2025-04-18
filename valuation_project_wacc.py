@@ -177,26 +177,25 @@ with col2:
     ed = st.date_input("FRED End Date", pd.to_datetime("2025-12-31"))
 
 if st.button("Fetch & Plot Quarterly Inv/Sales Overlay"):
-    # Fetch FRED series
-    sid, desc = next(iter(FRED_SERIES.items()))
+    # Fetch FRED series\    sid, desc = next(iter(FRED_SERIES.items()))
     df_f = get_fred_data(sid, sd.strftime("%Y-%m-%d"), ed.strftime("%Y-%m-%d"))
     if df_f is None:
         st.warning("No FRED data.")
     else:
+        # Display FRED raw data
+        st.subheader("FRED Industry Inv/Sales Raw Data")
+        st.dataframe(df_f.set_index("date"))
+
         # Fetch Home Depot quarterly data
         hd = fetch_stock_data("HD")
         fin_q = hd.quarterly_financials  # quarterly income statement
         bs_q  = hd.quarterly_balance_sheet  # quarterly balance sheet
 
-        # Use quarters common to both
-        periods_q = [c for c in fin_q.columns if c in bs_q.columns]
-        # Sort by date ascending
-        periods_q.sort()
+        # Use quarters common to both and sort
+        periods_q = sorted([c for c in fin_q.columns if c in bs_q.columns])
+        dates_q   = [pd.to_datetime(c) for c in periods_q]
 
-        # Prepare lists
-        dates_q = [pd.to_datetime(c) for c in periods_q]
-        invs_q  = []
-        revs_q  = []
+        invs_q, revs_q = [], []
         for c in periods_q:
             try:
                 invs_q.append(bs_q.at["Inventory", c])
@@ -207,13 +206,25 @@ if st.button("Fetch & Plot Quarterly Inv/Sales Overlay"):
             except:
                 revs_q.append(0)
 
-        # Calculate quarterly Inventory/Sales ratio (%)
-        hd_ratio_q = [round(inv/rev,4)*100 if rev else None for inv, rev in zip(invs_q, revs_q)]
+        # Display Home Depot raw quarterly values
+        hd_df = pd.DataFrame({"date": dates_q, "Inventory": invs_q, "Revenue": revs_q})
+        hd_df.set_index("date", inplace=True)
+        st.subheader("Home Depot Quarterly Raw Inventory & Revenue")
+        st.dataframe(hd_df)
 
-        # Plot
+        # Calculate quarterly Inventory/Sales ratio (%)
+        hd_ratio_q = [(inv/rev*100) if rev else None for inv, rev in zip(invs_q, revs_q)]
+
+        # Display Home Depot ratio series
+        ratio_df = pd.DataFrame({"date": dates_q, "HD Inv/Sales (%)": hd_ratio_q})
+        ratio_df.set_index("date", inplace=True)
+        st.subheader("Home Depot Quarterly Inv/Sales Ratio (%)")
+        st.dataframe(ratio_df)
+
+        # Plot overlay
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(df_f["date"], df_f["value"], label="Industry Inv/Sales (Monthly FRED)")
-        ax.plot(dates_q, hd_ratio_q, marker='o', linestyle='-', label="Home Depot Inv/Sales (Quarterly)")
+        ax.plot(ratio_df.index, ratio_df["HD Inv/Sales (%)"], marker='o', linestyle='-', label="Home Depot Inv/Sales (Quarterly)")
         ax.set_xlabel("Date")
         ax.set_ylabel("Inv/Sales Ratio (%)")
         ax.set_title("Industry vs. Home Depot Inventory/Sales Ratio (Quarterly)")
