@@ -125,7 +125,7 @@ if ticker:
         # Working Capital & CCC
         st.subheader("Working Capital Metrics (Days)")
         wdata=[]
-        for c in cols3:
+        for c in c3:
             inv = sv(bs,"Inventory",c)
             ar  = sv(bs,"Accounts Receivable",c)
             ap  = sv(bs,"Accounts Payable",c)
