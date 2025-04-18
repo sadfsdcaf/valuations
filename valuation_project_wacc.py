@@ -193,8 +193,18 @@ if st.button("Fetch & Plot Inv/Sales Overlay"):
         bs_hd  = hd.balance_sheet
         periods = [c for c in fin_hd.columns if c in bs_hd.columns]
         years_hd = [pd.to_datetime(c).year for c in periods]
-        invs = [bs_hd.at.get("Inventory",{}).get(c,0) for c in periods]
-        revs = [fin_hd.at.get("Total Revenue",{}).get(c,0) for c in periods]
+                invs = []
+        for c in periods:
+            try:
+                invs.append(bs_hd.at["Inventory", c])
+            except:
+                invs.append(0)
+                revs = []
+        for c in periods:
+            try:
+                revs.append(fin_hd.at["Total Revenue", c])
+            except:
+                revs.append(0)
         hd_ratio = [round(inv/rev,4)*100 if rev else None for inv,rev in zip(invs,revs)]
 
         fig, ax = plt.subplots(figsize=(10,5))
