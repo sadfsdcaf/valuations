@@ -136,10 +136,10 @@ if not annual_financials.empty:
   # 4) convert to millions & round
   key_df = key_df.applymap(lambda x: round(x/1e6, 2))
   
-  # 5) rename the columns to just the calendar year and sort ascending
-  years = [c.year for c in key_df.columns]
+  # 5) rename the columns to just the calendar year and sort oldest → newest
+  years = [c.year for c in last3]
   key_df.columns = years
-  key_df = key_df[key_df.columns[::-1]]  # sort oldest → newest
+  key_df = key_df[years[::-1]]
   
   # 6) display key financials
   st.subheader("Key Financials (M) — Last 3 Years")
@@ -147,9 +147,25 @@ if not annual_financials.empty:
   
   # 7) calculate year‑over‑year growth rates
   growth_df = key_df.pct_change(axis=1).iloc[:, 1:] * 100
-  # label growth columns as “YYYY vs YYYY”
   growth_df.columns = [f"{curr} vs {prev}" for prev, curr in zip(years[:-1], years[1:])]
-  
   st.subheader("Year‑over‑Year Growth (%)")
   st.table(growth_df)
+  
+  # 8) Working Capital Metrics (Days) for last 3 years
+  metrics_data = {}
+  for dt in last3:
+      year = dt.year
+      inv = (balance_sheet.at["Inventory", dt] / 1e6) if "Inventory" in balance_sheet.index else 0
+      ar  = (balance_sheet.at["Net Receivables", dt] / 1e6) if "Net Receivables" in balance_sheet.index else 0
+      ap  = (balance_sheet.at["Accounts Payable", dt] / 1e6) if "Accounts Payable" in balance_sheet.index else 0
+      cogs = (annual_financials.at["Cost Of Revenue", dt] / 1e6) if "Cost Of Revenue" in annual_financials.index else 0
+      rev  = (annual_financials.at["Total Revenue", dt] / 1e6) if "Total Revenue" in annual_financials.index else 0
+      dio = (inv / cogs) * 365 if cogs else 0
+      dso = (ar  / rev)  * 365 if rev  else 0
+      dpo = (ap  / cogs) * 365 if cogs else 0
+      metrics_data[year] = [round(dio, 1), round(dso, 1), round(dpo, 1)]
+  
+  wc_df = pd.DataFrame(metrics_data, index=["DIO", "DSO", "DPO"])
+  st.subheader("Working Capital Metrics (Days) — Last 3 Years")
+  st.table(wc_df)
 
