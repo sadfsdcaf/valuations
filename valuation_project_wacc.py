@@ -182,11 +182,16 @@ with col2:
     ed = st.date_input("FRED End Date",   pd.to_datetime("2025-12-31"))
 
 if st.button("Fetch & Plot Inv/Sales Overlay"):
+    # Fetch FRED series
     sid, desc = next(iter(FRED_SERIES.items()))
     df_f = get_fred_data(sid, sd.strftime("%Y-%m-%d"), ed.strftime("%Y-%m-%d"))
     if df_f is None:
         st.warning("No FRED data.")
     else:
+        # Display FRED raw data
+        st.subheader("FRED Industry Inv/Sales Raw Data")
+        st.dataframe(df_f.set_index("date"))
+
         # Fetch Home Depot annual data
         hd = fetch_stock_data("HD")
         fin_hd = hd.financials
@@ -194,6 +199,8 @@ if st.button("Fetch & Plot Inv/Sales Overlay"):
 
         # Determine periods common to both statements
         periods = [c for c in fin_hd.columns if c in bs_hd.columns]
+        # Convert period labels to datetime for index
+        dates = [pd.to_datetime(c) for c in periods]
 
         # Extract Inventory and Revenue values
         invs, revs = [], []
@@ -207,14 +214,15 @@ if st.button("Fetch & Plot Inv/Sales Overlay"):
             except:
                 revs.append(0)
 
-                # Calculate Inv/Sales ratio (%) and divide by 12 for monthly equivalent
+        # Calculate Inv/Sales ratio (%) and divide by 12 for monthly equivalent
         ratios = [round((inv/rev) * 100 / 12, 2) if rev else None for inv, rev in zip(invs, revs)]
 
-        # Display raw tables for debug
+        # Display Home Depot raw quarterly values
         hd_df = pd.DataFrame({"Inventory": invs, "Revenue": revs}, index=dates)
         st.subheader("Home Depot Raw Inventory & Revenue")
         st.dataframe(hd_df)
 
+        # Display Home Depot ratio series
         ratio_df = pd.DataFrame({"Inv/Sales (%)": ratios}, index=dates)
         st.subheader("Home Depot Inv/Sales Ratio (%)")
         st.dataframe(ratio_df)
