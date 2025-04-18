@@ -193,7 +193,7 @@ if st.button("Fetch & Plot Inv/Sales Overlay"):
         bs_hd  = hd.balance_sheet
         periods = [c for c in fin_hd.columns if c in bs_hd.columns]
         years_hd = [pd.to_datetime(c).year for c in periods]
-                invs = []
+        invs = []
         for c in periods:
             try:
                 invs.append(bs_hd.at["Inventory", c])
