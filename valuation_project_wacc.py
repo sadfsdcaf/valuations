@@ -110,7 +110,7 @@ if ticker:
         total_invested_capital = total_debt + total_equity
 
         equity_beta = info.get('beta', 1)
-                treasury_yield = get_10yr_treasury_yield()
+        treasury_yield = get_10yr_treasury_yield()
 
         asset_beta = equity_beta * (1 / (1 + (1 - calculated_tax_rate) * (total_debt / total_equity))) if total_equity else 0
 
