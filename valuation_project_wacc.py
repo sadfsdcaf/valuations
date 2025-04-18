@@ -5,18 +5,17 @@ import requests
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-# ——— Page config (must be first) ———
+# ——— Page config ———
 st.set_page_config(page_title="Financial + FRED Dashboard", layout="wide")
 
-st.title("Last Published Annual Financial Statements with NOPAT, FCF, Invested Capital Breakdown + Inv/Sales Overlay")
+st.title("Annual Financials with NOPAT, FCF, and Invested Capital + Inv/Sales Overlay")
 
 st.markdown("""
-This dashboard pulls:
-1. Annual financial statements from Yahoo Finance to compute NOPAT, FCF, Invested Capital,
-   Working‑Capital metrics (DIO, DSO, DPO, CCC).
-2. Industry Inventory/Sales ratio (Building Materials & Garden Equipment Dealers) from FRED.
-3. Home Depot’s Inventory/Sales ratio from its annual statements.
-All visuals and tables are arranged in collapsible sections for clarity.
+This dashboard:
+1. Pulls annual financial statements from Yahoo Finance to compute NOPAT, FCF, Invested Capital,
+   and Working‑Capital metrics (DIO, DSO, DPO, CCC).
+2. Fetches the Industry Inventory/Sales ratio (Building Materials & Garden Equipment Dealers) from FRED.
+3. Calculates and plots Home Depot’s Inventory/Sales ratio based on the same periods provided by yFinance.
 """)
 
 # ——— Constants & Helpers ———
@@ -25,17 +24,10 @@ FRED_URL    = "https://api.stlouisfed.org/fred/series/observations"
 FRED_SERIES = {"MRTSIR444USS": "Industry Inv/Sales Ratio: Building Materials & Garden Equipment Dealers"}
 
 def format_millions(x):
-    if pd.notnull(x):
-        return round(x / 1_000_000, 2)
-    return 0
+    return round(x/1e6,2) if pd.notnull(x) else 0
 
-def to_millions(x):
-    if pd.notnull(x):
-        return round(x / 1e6, 2)
-    return 0
-
-# Fetch function (simple, without retry logic)
-def fetch_stock_data(ticker):
+@st.cache_data
+def fetch_ticker(ticker):
     return yf.Ticker(ticker)
 
 @st.cache_data
@@ -45,189 +37,134 @@ def get_fred_data(series_id, start_date, end_date):
         "api_key":   API_KEY,
         "file_type": "json",
         "observation_start": start_date,
-        "observation_end":   end_date,
+        "observation_end":   end_date
     }
-    resp = requests.get(FRED_URL, params=params)
-    if resp.status_code != 200:
-        st.error(f"Error fetching FRED: {resp.status_code}")
+    r = requests.get(FRED_URL, params=params)
+    if r.status_code!=200:
+        st.error(f"Error fetching FRED: {r.status_code}")
         return None
-    data = resp.json().get("observations", [])
-    df = pd.DataFrame(data)
+    df = pd.DataFrame(r.json().get("observations", []))
+    if df.empty: return None
     df["date"]  = pd.to_datetime(df["date"])
     df["value"] = pd.to_numeric(df["value"], errors="coerce")
-    return df if not df.empty else None
+    return df
 
-# GAAP structured view helper
-def display_gaap_income_statement(fin, col):
-    gaap_order = [
-        "Total Revenue","Operating Revenue","Cost Of Revenue","Gross Profit",
-        "Operating Expense","Selling General and Administrative","Research & Development",
-        "Operating Income","EBIT","EBITDA"
-    ]
-    with st.expander("GAAP Income Statement", expanded=False):
-        for item in gaap_order:
-            if item in fin.index:
-                val = format_millions(fin.at[item, col])
-                st.write(f"**{item}**: {val}M")
-
-# ——— Main financial section ———
+# ——— Main Section ———
 ticker = st.text_input("Enter Ticker:", "AAPL")
 if ticker:
-    stock = fetch_stock_data(ticker)
-    fin   = stock.financials
-    bs    = stock.balance_sheet
-    cf    = stock.cashflow
-    info  = stock.info
+    tk = fetch_ticker(ticker)
+    fin = tk.financials
+    bs  = tk.balance_sheet
+    cf  = tk.cashflow
+    info= tk.info
 
-    # Debug: display available annual periods and count
-    st.write("Available annual periods:", [pd.to_datetime(c).year for c in fin.columns])
-    st.write("Count of annual periods:", len(fin.columns))
-    bs    = stock.balance_sheet
-    cf    = stock.cashflow
-    info  = stock.info
-
-    if not fin.empty:
+    if fin.empty:
+        st.warning("No annual financials found for this ticker.")
+    else:
         latest = fin.columns[0]
-
-        # Safe retrieval
-        def safe_get(df, field):
-            return df.at[field, latest] if field in df.index else 0
+        # Safe getter
+        def sv(df, field, col):
+            return df.at[field, col] if field in df.index else 0
 
         # Compute core metrics
-        total_revenue = format_millions(safe_get(fin, 'Total Revenue'))
-        pretax_income  = format_millions(safe_get(fin, 'Pretax Income'))
-        tax_prov       = format_millions(safe_get(fin, 'Tax Provision'))
-        dep            = format_millions(safe_get(fin, 'Reconciled Depreciation'))
+        revenue = sv(fin, 'Total Revenue', latest)
+        pretax  = sv(fin, 'Pretax Income', latest)
+        taxprov = sv(fin, 'Tax Provision', latest)
+        dep     = sv(fin, 'Reconciled Depreciation', latest)
+        taxrate = (taxprov/pretax) if pretax else 0
+        nopat   = (pretax * (1-taxrate))/1e6
+        damo    = sv(cf, 'Depreciation Amortization Depletion', latest)
+        ppe     = abs(sv(cf, 'Net PPE Purchase And Sale', latest))
+        wcchg   = sv(cf, 'Change In Working Capital', latest)
+        fcf     = (nopat + damo - ppe - wcchg)/1e6
+        ltd     = sv(bs, 'Long Term Debt', latest)
+        currd   = sv(bs, 'Current Debt', latest)
+        totald  = (ltd+currd)/1e6
+        teq     = sv(bs, 'Total Equity Gross Minority Interest', latest)/1e6
 
-        tax_rate = (tax_prov / pretax_income) if pretax_income else 0
-        nopat    = pretax_income * (1 - tax_rate)
+        # Summary
+        st.subheader("Summary")
+        df_sum = pd.DataFrame({
+            'Metric':['NOPAT (M)','FCF (M)','Total Debt (M)','Total Equity (M)','Market Cap (M)'],
+            'Value':[nopat, fcf, totald, teq, format_millions(info.get('marketCap',0))]
+        })
+        st.table(df_sum)
 
-        dep_amort = format_millions(safe_get(cf, 'Depreciation Amortization Depletion'))
-        ppe       = abs(format_millions(safe_get(cf, 'Net PPE Purchase And Sale')))
-        chg_wc    = format_millions(safe_get(cf, 'Change In Working Capital'))
-        fcf       = nopat + dep_amort - ppe - chg_wc
+        # GAAP expander
+        st.subheader("GAAP Income Statement")
+        for item in ["Total Revenue","Cost Of Revenue","Gross Profit","EBIT","EBITDA"]:
+            if item in fin.index:
+                st.write(f"**{item}**: {format_millions(sv(fin,item,latest))}M")
 
-        ltd  = format_millions(safe_get(bs, 'Long Term Debt'))
-        cd   = format_millions(safe_get(bs, 'Current Debt'))
-        td   = ltd + cd
-        te   = format_millions(safe_get(bs, 'Total Equity Gross Minority Interest'))
-
-        # Summary table
-        with st.expander("Summary Table", expanded=True):
-            summary = pd.DataFrame({
-                'Metric': ['NOPAT (M)','FCF (M)','Total Debt (M)','Total Equity (M)','Market Cap (M)'],
-                'Value':  [nopat, fcf, td, te, format_millions(info.get('marketCap', 0))]
-            })
-            st.table(summary)
-
-        # GAAP view
-        display_gaap_income_statement(fin, latest)
-
-        # Balance Sheet & Cash Flow
-        st.subheader("Balance Sheet")
-        st.dataframe(bs.applymap(lambda x: to_millions(x)))
-        st.subheader("Cash Flow Statement")
-        st.dataframe(cf.applymap(lambda x: to_millions(x)))
+        # Balance & Cashflow
+        st.subheader("Balance Sheet (M)")
+        st.dataframe(bs.applymap(format_millions))
+        st.subheader("Cash Flow (M)")
+        st.dataframe(cf.applymap(format_millions))
 
         # Key Financials (Last 3 years)
-        metrics = ["Total Revenue","Gross Profit","EBITDA","EBIT"]
-        recent  = fin.columns[:3]
-        key_df  = fin.reindex(metrics).loc[:, recent].applymap(to_millions)
-        years   = [pd.to_datetime(c).year for c in recent][::-1]
-        key_df.columns = years
-
         st.subheader("Key Financials (M) — Last 3 Years")
-        st.table(key_df)
+        metrics = ["Total Revenue","Gross Profit","EBIT","EBITDA"]
+        cols3 = fin.columns[:3]
+        kdf = fin.reindex(metrics).loc[:,cols3].applymap(format_millions)
+        yrs = [pd.to_datetime(c).year for c in cols3][::-1]
+        kdf.columns=yrs
+        st.table(kdf)
 
-        # Year‑over‑Year Growth
-        grow = key_df.pct_change(axis=1).iloc[:,1:] * 100
-        grow.columns = [f"{y2} vs {y1}" for y1, y2 in zip(years[:-1], years[1:])]
-        st.subheader("Year‑over‑Year Growth (%)")
-        st.table(grow)
+        # YoY Growth
+        st.subheader("YoY Growth (%)")
+        gdf = kdf.pct_change(axis=1).iloc[:,1:]*100
+        gdf.columns=[f"{y2} vs {y1}" for y1,y2 in zip(yrs[:-1],yrs[1:])]
+        st.table(gdf)
 
         # Working Capital & CCC
-        def sv(df, idx, col):
-            try: return df.at[idx, col]
-            except: return 0
-
-        raw, wc = {}, {}
-        for c in recent:
-            yr  = pd.to_datetime(c).year
-            inv = sv(bs, "Inventory", c)
-            ar  = sv(bs, "Accounts Receivable", c)
-            ap  = sv(bs, "Accounts Payable", c)
-            cogs= sv(fin, "Cost Of Revenue", c)
-            rev = sv(fin, "Total Revenue", c)
-
-            inv_m, ar_m = to_millions(inv), to_millions(ar)
-            ap_m, cogs_m = to_millions(ap), to_millions(cogs)
-            rev_m = to_millions(rev)
-
-            dio = round((inv/cogs)*365,1) if cogs else None
-            dso = round((ar/rev)*365,1) if rev else None
-            dpo = round((ap/cogs)*365,1) if cogs else None
-            ccc = round((dio or 0) + (dpo or 0) - (dso or 0),1)
-
-            raw[yr] = [inv_m, ar_m, ap_m, cogs_m, rev_m]
-            wc[yr]  = [dio, dso, dpo, ccc]
-
-        st.subheader("Working Capital Raw Inputs (M)")
-        raw_df = pd.DataFrame(raw, index=["Inventory (M)","Accounts Receivable (M)","Accounts Payable (M)","COGS (M)","Revenue (M)"])
-        st.table(raw_df)
-
         st.subheader("Working Capital Metrics (Days)")
-        wc_df = pd.DataFrame(wc, index=["DIO","DSO","DPO","CCC"] )
-        st.table(wc_df)
+        wdata=[]
+        for c in cols3:
+            inv=sv(bs,"Inventory",c)
+            ar=sv(bs,"Accounts Receivable",c)
+            ap=sv(bs,"Accounts Payable",c)
+            cogs=sv(fin,"Cost Of Revenue",c)
+            rev=sv(fin,"Total Revenue",c)
+            dio=round(inv/cogs*365,1) if cogs else None
+            dso=round(ar/rev*365,1) if rev else None
+            dpo=round(ap/cogs*365,1) if cogs else None
+            ccc=round((dio or 0)+(dpo or 0)-(dso or 0),1)
+            wdata.append({"Year":pd.to_datetime(c).year,
+                          "DIO":dio,"DSO":dso,"DPO":dpo,"CCC":ccc})
+        wdf=pd.DataFrame(wdata).set_index("Year")
+        st.table(wdf)
 
-# ——— FRED + Home Depot Historical Overlay ———
+# ——— Overlay ———
 st.markdown("---")
-st.subheader("Inventory/Sales Ratio: Industry vs. Home Depot (2000–Present)")
-col1, col2 = st.columns(2)
+st.subheader("Inventory/Sales Overlay")
+col1,col2=st.columns(2)
 with col1:
-    sd = st.date_input("FRED Start Date", pd.to_datetime("2000-01-01"))
+    sd=st.date_input("FRED Start",pd.to_datetime("2000-01-01"))
 with col2:
-    ed = st.date_input("FRED End Date",   pd.to_datetime("2025-12-31"))
-
-if st.button("Fetch & Plot Historical Inv/Sales Overlay"):
-    sid, desc = next(iter(FRED_SERIES.items()))
-    df_f = get_fred_data(sid, sd.strftime("%Y-%m-%d"), ed.strftime("%Y-%m-%d"))
+    ed=st.date_input("FRED End",pd.to_datetime("2025-12-31"))
+if st.button("Plot Inv/Sales Overlay"):
+    # FRED
+    sid,_=next(iter(FRED_SERIES.items()))
+    df_f=get_fred_data(sid,sd.strftime("%Y-%m-%d"),ed.strftime("%Y-%m-%d"))
     if df_f is None:
         st.warning("No FRED data.")
     else:
-        st.subheader("FRED Industry Inv/Sales Raw Data")
-        st.dataframe(df_f.set_index("date"))
+        # HD annual
+        tk=fetch_ticker("HD")
+        fin_hd,bs_hd = tk.financials,tk.balance_sheet
+        periods=[c for c in fin_hd.columns if c in bs_hd.columns]
+        dates=[pd.to_datetime(c) for c in periods]
+        invs=[sv(bs_hd,"Inventory",c) for c in periods]
+        revs=[sv(fin_hd,"Total Revenue",c) for c in periods]
+        ratios=[round(i/r*100,2) if r else None for i,r in zip(invs,revs)]
+        hd_df=pd.DataFrame({"InvSales%":ratios},index=dates)
+        st.dataframe(hd_df)
+        fig,ax=plt.subplots(figsize=(10,5))
+        ax.plot(df_f["date"],df_f["value"],label="Industry")
+        ax.plot(hd_df.index,hd_df["InvSales%"],marker='o',label="Home Depot")
+        ax.set_xlabel("Date");ax.set_ylabel("Inv/Sales %")
+        ax.legend();ax.grid(True)
+        st.pyplot(fig)
 
-        from alpha_vantage.fundamentaldata import FundamentalData
-        ALPHA_KEY = "059VKV2VPORKW7KA"
-        fd_av = FundamentalData(key=ALPHA_KEY, output_format="json")
-        bs_json, _ = fd_av.get_balance_sheet_annual(symbol="HD")
-        is_json, _ = fd_av.get_income_statement_annual(symbol="HD")
-        bs_reports = bs_json.get("annualReports", [])
-        is_reports = is_json.get("annualReports", [])
-
-        hist_data = []
-        for bs_r, is_r in zip(bs_reports, is_reports):
-            date = pd.to_datetime(bs_r.get("fiscalDateEnding"))
-            inv  = float(bs_r.get("inventory", 0))
-            rev  = float(is_r.get("totalRevenue", 0))
-            ratio = (inv / rev * 100) if rev else None
-            hist_data.append({"date": date, "Inv/Sales (%)": ratio})
-
-        if not hist_data:
-            st.warning("No Home Depot historical data returned.")
-        else:
-            hd_hist_df = pd.DataFrame(hist_data).set_index("date").sort_index()
-            st.subheader("Home Depot Annual Inv/Sales Ratio (%) — Historical")
-            st.dataframe(hd_hist_df)
-
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.plot(df_f["date"], df_f["value"], label="Industry Inv/Sales (FRED)")
-            ax.plot(hd_hist_df.index, hd_hist_df['Inv/Sales (%)'], marker='o', linestyle='-', label="Home Depot Inv/Sales (Annual)")
-            ax.set_xlabel("Date")
-            ax.set_ylabel("Inv/Sales Ratio (%)")
-            ax.set_title("Industry vs. Home Depot Inventory/Sales Ratio (2000–Present)")
-            ax.legend()
-            ax.grid(True)
-            st.pyplot(fig)
-
-st.markdown("Data sourced from Yahoo Finance, FRED & Alpha Vantage.")
+st.markdown("Data from Yahoo Finance & FRED.")
