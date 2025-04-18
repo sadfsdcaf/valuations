@@ -166,7 +166,7 @@ if ticker:
 
         # GAAP Income Statement
         st.subheader("Free Cash Flow")
-        for itm in ["EBIT"]:
+        for itm in ["EBIT", "(1 - T)" ]:
             if itm in fin.index:
                 st.write(f"**{itm}**: {safe_latest(fin, itm)/1e6:.0f}M")
 
