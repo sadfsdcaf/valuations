@@ -26,7 +26,6 @@ FRED_SERIES = {"MRTSIR444USS": "Industry Inv/Sales Ratio: Building Materials & G
 def format_millions(x):
     return round(x/1e6,2) if pd.notnull(x) else 0
 
-@st.cache_data
 def fetch_ticker(ticker):
     return yf.Ticker(ticker)
 
