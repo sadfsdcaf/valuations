@@ -123,7 +123,7 @@ if ticker:
 
         # EBIT-based FCF
         ebit       = safe_latest(fin, 'EBIT')
-        ebit_nopat = ebit * (1 - taxrate)
+        ebit_nopat = safe_latest(fin, "ebit") * (1 - taxrate)
         fcf_ebit   = ebit_nopat + damo - ppe - wcchg
 
         # Summary Table
@@ -166,9 +166,12 @@ if ticker:
 
         # GAAP Income Statement
         st.subheader("Free Cash Flow")
-        for itm in ["EBIT", ebit_nopat ]:
-            if itm in fin.index:
-                st.write(f"**{itm}**: {safe_latest(fin, itm)/1e6:.0f}M")
+        metrics = {
+            "EBIT": safe_latest(fin, "EBIT"),
+            "NOPAT": ebit_nopat
+        }
+        for name, val in metrics.items():
+            st.write(f"**{name}**: {val/1e6:.0f}M")
 
         # Financial Statement (M)
         st.subheader("Income Statement (M) — Last Published")
