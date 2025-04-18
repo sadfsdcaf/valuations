@@ -90,6 +90,7 @@ if ticker:
         pretax         = safe_latest(fin, 'Pretax Income')
         taxprov        = safe_latest(fin, 'Tax Provision')
         net_ppe        = safe_latest(fin, 'Net PPE')
+        gross_ppe      = safe_latest(fin, 'Gross PPE')
         taxrate        = (taxprov / pretax) if pretax else 0
         ebit           = safe_latest(fin, 'EBIT')
         nopat          = safe_latest(fin, 'EBIT') * (1 - taxrate)
@@ -171,6 +172,7 @@ if ticker:
         metrics = {
             "EBIT": safe_latest(fin, "EBIT"),
             "NOPAT": nopat,
+            "Gross PPE": gross_ppe,
             "Net PPE": net_ppe
             # "Change in NWC": 
         }
