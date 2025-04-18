@@ -79,6 +79,13 @@ if ticker:
     cf    = stock.cashflow
     info  = stock.info
 
+    # Debug: display available annual periods and count
+    st.write("Available annual periods:", [pd.to_datetime(c).year for c in fin.columns])
+    st.write("Count of annual periods:", len(fin.columns))
+    bs    = stock.balance_sheet
+    cf    = stock.cashflow
+    info  = stock.info
+
     if not fin.empty:
         latest = fin.columns[0]
 
