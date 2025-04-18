@@ -15,7 +15,7 @@ This dashboard pulls:
 1. Annual financial statements from Yahoo Finance to compute NOPAT, FCF, Invested Capital,
    Working‑Capital metrics (DIO, DSO, DPO, CCC).
 2. Industry Inventory/Sales ratio (Building Materials & Garden Equipment Dealers) from FRED.
-3. Home Depot’s Inventory/Sales ratio from its quarterly statements.
+3. Home Depot’s Inventory/Sales ratio from its annual statements.
 All visuals and tables are arranged in collapsible sections for clarity.
 """)
 
@@ -78,73 +78,142 @@ if ticker:
     if not fin.empty:
         latest = fin.columns[0]
 
-        # Compute core metrics and display sections...
-        # Summary Table, GAAP view, Balance Sheet, Cash Flow, Key Financials, Growth,
-        # Working Capital metrics and CCC all unchanged.
-        pass
+        # Compute core metrics
+        def safe_get(df, field):
+            return df.at[field, latest] if field in df.index else 0
 
-# ——— FRED + Home Depot Quarterly Overlay ———
+        total_revenue = format_millions(safe_get(fin, 'Total Revenue'))
+        cost_of_revenue = format_millions(safe_get(fin, 'Cost Of Revenue'))
+        pretax_income = format_millions(safe_get(fin, 'Pretax Income'))
+        tax_prov = format_millions(safe_get(fin, 'Tax Provision'))
+        dep = format_millions(safe_get(fin, 'Reconciled Depreciation'))
+
+        tax_rate = (tax_prov / pretax_income) if pretax_income else 0
+        nopat = pretax_income * (1 - tax_rate)
+
+        dep_amort = format_millions(safe_get(cf, 'Depreciation Amortization Depletion'))
+        ppe = abs(format_millions(safe_get(cf, 'Net PPE Purchase And Sale')))
+        chg_wc = format_millions(safe_get(cf, 'Change In Working Capital'))
+        fcf = nopat + dep_amort - ppe - chg_wc
+
+        ltd = format_millions(safe_get(bs, 'Long Term Debt'))
+        curr_d = format_millions(safe_get(bs, 'Current Debt'))
+        td = ltd + curr_d
+        te = format_millions(safe_get(bs, 'Total Equity Gross Minority Interest'))
+        tic = td + te
+
+        beta = info.get('beta', 1)
+        ry = get_fred_data  # placeholder to avoid confusion
+        # skip WACC for brevity
+
+        # Summary table
+        with st.expander("Summary Table", expanded=True):
+            summary = pd.DataFrame({
+                'Metric': ['NOPAT (M)','FCF (M)','Total Debt (M)','Total Equity (M)','Market Cap (M)'],
+                'Value': [nopat, fcf, td, te, format_millions(info.get('marketCap',0))]
+            })
+            st.table(summary)
+
+        # GAAP structured view
+        display_gaap_income_statement(fin, latest)
+
+        # Balance & Cash Flow
+        st.subheader("Balance Sheet")
+        st.dataframe(bs.applymap(lambda x: to_millions(x)))
+        st.subheader("Cash Flow Statement")
+        st.dataframe(cf.applymap(lambda x: to_millions(x)))
+
+        # Key Financials last 3 years
+        metrics = ["Total Revenue","Gross Profit","EBITDA","EBIT"]
+        recent = fin.columns[:3]
+        key_df = fin.reindex(metrics).loc[:, recent].applymap(to_millions)
+        years = [pd.to_datetime(c).year for c in recent][::-1]
+        key_df.columns = years
+        st.subheader("Key Financials (M) — Last 3 Years")
+        st.table(key_df)
+
+        # YoY Growth
+        grow = key_df.pct_change(axis=1).iloc[:,1:] * 100
+        grow.columns = [f"{y2} vs {y1}" for y1,y2 in zip(years[:-1], years[1:])]
+        st.subheader("Year‑over‑Year Growth (%)")
+        st.table(grow)
+
+        # Working capital & CCC
+        def sv(df, idx, col):
+            try: return df.at[idx, col]
+            except: return 0
+
+        raw, wc = {}, {}
+        for col in recent:
+            yr = pd.to_datetime(col).year
+            inv = sv(bs, "Inventory", col)
+            ar  = sv(bs, "Accounts Receivable", col)
+            ap  = sv(bs, "Accounts Payable", col)
+            cogs = sv(fin, "Cost Of Revenue", col)
+            rev  = sv(fin, "Total Revenue", col)
+
+            inv_m, ar_m = to_millions(inv), to_millions(ar)
+            ap_m, cogs_m = to_millions(ap), to_millions(cogs)
+            rev_m = to_millions(rev)
+
+            dio = round((inv/cogs)*365,1) if cogs else None
+            dso = round((ar/rev)*365,1) if rev else None
+            dpo = round((ap/cogs)*365,1) if cogs else None
+            ccc = round((dio or 0)+(dpo or 0)-(dso or 0),1)
+
+            raw[yr] = [inv_m, ar_m, ap_m, cogs_m, rev_m]
+            wc[yr]  = [dio, dso, dpo, ccc]
+
+        raw_df = pd.DataFrame(raw, index=["Inventory (M)","Accounts Receivable (M)","Accounts Payable (M)","COGS (M)","Revenue (M)"])
+        st.subheader("Working Capital Raw Inputs (M)")
+        st.table(raw_df)
+
+        wc_df = pd.DataFrame(wc, index=["DIO","DSO","DPO","CCC"])
+        st.subheader("Working Capital Metrics (Days)")
+        st.table(wc_df)
+
+# ——— FRED + Home Depot Overlay ———
 st.markdown("---")
-st.subheader("Inventory/Sales Ratio: Industry vs. Home Depot (Quarterly)")
-col1, col2 = st.columns(2)
+st.subheader("Inventory/Sales Ratio: Industry vs. Home Depot")
+col1,col2 = st.columns(2)
 with col1:
-    sd = st.date_input("FRED Start Date", pd.to_datetime("2000-01-01"))
+    sd=st.date_input("FRED Start Date", pd.to_datetime("2000-01-01"))
 with col2:
-    ed = st.date_input("FRED End Date", pd.to_datetime("2025-12-31"))
+    ed=st.date_input("FRED End Date", pd.to_datetime("2025-12-31"))
 
-if st.button("Fetch & Plot Quarterly Inv/Sales Overlay"):
-    # Fetch FRED series
+if st.button("Fetch & Plot Inv/Sales Overlay"):
     sid, desc = next(iter(FRED_SERIES.items()))
     df_f = get_fred_data(sid, sd.strftime("%Y-%m-%d"), ed.strftime("%Y-%m-%d"))
     if df_f is None:
         st.warning("No FRED data.")
     else:
-        # Display FRED raw data
-        st.subheader("FRED Industry Inv/Sales Raw Data")
-        st.dataframe(df_f.set_index("date"))
-
-        # Fetch Home Depot quarterly data
+        # Home Depot data
         hd = fetch_stock_data("HD")
-        fin_q = hd.quarterly_financials
-        bs_q  = hd.quarterly_balance_sheet
-
-        # Use quarters common to both and sort
-        periods_q = sorted([c for c in fin_q.columns if c in bs_q.columns])
-        dates_q   = [pd.to_datetime(c) for c in periods_q]
-
-        invs_q, revs_q = [], []
-        for c in periods_q:
+        fin_hd = hd.financials
+        bs_hd  = hd.balance_sheet
+        periods = [c for c in fin_hd.columns if c in bs_hd.columns]
+        years_hd = [pd.to_datetime(c).year for c in periods]
+                invs = []
+        for c in periods:
             try:
-                invs_q.append(bs_q.at["Inventory", c])
+                invs.append(bs_hd.at["Inventory", c])
             except:
-                invs_q.append(0)
+                invs.append(0)
+                revs = []
+        for c in periods:
             try:
-                revs_q.append(fin_q.at["Total Revenue", c])
+                revs.append(fin_hd.at["Total Revenue", c])
             except:
-                revs_q.append(0)
+                revs.append(0)
+        hd_ratio = [round(inv/rev,4)*100 if rev else None for inv,rev in zip(invs,revs)]
 
-        # Display Home Depot raw quarterly values
-        hd_df = pd.DataFrame({"date": dates_q, "Inventory": invs_q, "Revenue": revs_q})
-        hd_df.set_index("date", inplace=True)
-        st.subheader("Home Depot Quarterly Raw Inventory & Revenue")
-        st.dataframe(hd_df)
-
-        # Calculate quarterly Inventory/Sales ratio (%)
-        hd_ratio_q = [(inv/rev*100) if rev else None for inv, rev in zip(invs_q, revs_q)]
-
-        # Display Home Depot ratio series
-        ratio_df = pd.DataFrame({"date": dates_q, "HD Inv/Sales (%)": hd_ratio_q})
-        ratio_df.set_index("date", inplace=True)
-        st.subheader("Home Depot Quarterly Inv/Sales Ratio (%)")
-        st.dataframe(ratio_df)
-
-        # Plot overlay
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(df_f["date"], df_f["value"], label="Industry Inv/Sales (Monthly FRED)")
-        ax.plot(ratio_df.index, ratio_df["HD Inv/Sales (%)"], marker='o', linestyle='-', label="Home Depot Inv/Sales (Quarterly)")
+        fig, ax = plt.subplots(figsize=(10,5))
+        ax.plot(df_f["date"], df_f["value"], label="Industry Inv/Sales")
+        ax.plot([datetime(y,1,1) for y in years_hd], hd_ratio,
+                marker='o', linestyle='-', label="Home Depot Inv/Sales")
         ax.set_xlabel("Date")
         ax.set_ylabel("Inv/Sales Ratio (%)")
-        ax.set_title("Industry vs. Home Depot Inventory/Sales Ratio (Quarterly)")
+        ax.set_title("Industry vs. Home Depot Inventory/Sales Ratio")
         ax.legend()
         ax.grid(True)
         st.pyplot(fig)
