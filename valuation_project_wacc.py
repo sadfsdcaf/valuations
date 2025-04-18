@@ -172,7 +172,7 @@ if ticker:
             "EBIT": safe_latest(fin, "EBIT"),
             "NOPAT": nopat
             "Net PPE": net_ppe
-            "Change in NWC": 
+            # "Change in NWC": 
         }
         for name, val in metrics.items():
             st.write(f"**{name}**: {val/1e6:.0f}M")
