@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 import matplotlib.pyplot as plt
 from datetime import datetime
-from yfinance import YFRateLimitError
+from yfinance.shared import YFRateLimitError
 import time
 
 # ——— Page config (must be first) ———
