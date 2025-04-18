@@ -94,8 +94,8 @@ if ticker:
         # Summary Table
         st.subheader("Summary Table")
         df_sum = pd.DataFrame({
-            'Metric':['NOPAT (M)','FCF (M)','Total Debt (M)','Total Equity (M)','WACC','ROIC','Growth Rate','Valuation (Growth)','Valuation (No Growth)','Market Cap (M)'],
-            'Value':[nopat/1e6, fcf/1e6, td/1e6, te/1e6, wacc, roic, gr, val_g, val_ng, format_millions(info.get('marketCap',0))]
+            'Metric':['NOPAT (M)','FCF (M)','Total Debt (M)','Total Equity (M)','WACC','Beta','ROIC','Growth Rate','Valuation (Growth)','Valuation (No Growth)','Market Cap (M)'],
+            'Value':[nopat/1e6, fcf/1e6, td/1e6, te/1e6, wacc, beta, roic, gr, val_g, val_ng, format_millions(info.get('marketCap',0))]
         })
         st.table(df_sum)
 
@@ -105,7 +105,9 @@ if ticker:
             if itm in fin.index:
                 st.write(f"**{itm}**: {safe_latest(fin, itm)/1e6:.2f}M")
 
-        # Balance & Cashflow
+        # Financial Statement (M)
+        st.subheader("Income Statement (M) — Last Published")
+        st.dataframe(fin.applymap(format_millions))
         st.subheader("Balance Sheet (M)")
         st.dataframe(bs.applymap(format_millions))
         st.subheader("Cash Flow (M)")
