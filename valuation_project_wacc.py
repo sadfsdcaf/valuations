@@ -192,20 +192,29 @@ if st.button("Fetch & Plot Inv/Sales Overlay"):
         fin_hd = hd.financials
         bs_hd  = hd.balance_sheet
         periods = [c for c in fin_hd.columns if c in bs_hd.columns]
-        years_hd = [pd.to_datetime(c).year for c in periods]
-                invs = []
+                years_hd = [pd.to_datetime(c).year for c in periods]
+
+        # Collect Home Depot Inventory values
+        invs = []
         for c in periods:
             try:
                 invs.append(bs_hd.at["Inventory", c])
             except:
                 invs.append(0)
-                revs = []
+
+        # Collect Home Depot Revenue values
+        revs = []
         for c in periods:
             try:
                 revs.append(fin_hd.at["Total Revenue", c])
             except:
                 revs.append(0)
-        hd_ratio = [round(inv/rev,4)*100 if rev else None for inv,rev in zip(invs,revs)]
+
+        # Calculate Home Depot Inv/Sales ratio (%)
+        hd_ratio = [round(inv/rev, 4)*100 if rev else None for inv, rev in zip(invs, revs)]
+
+        fig, ax = plt.subplots(figsize=(10,5))
+        [round(inv/rev,4)*100 if rev else None for inv,rev in zip(invs,revs)]
 
         fig, ax = plt.subplots(figsize=(10,5))
         ax.plot(df_f["date"], df_f["value"], label="Industry Inv/Sales")
