@@ -120,7 +120,7 @@ if ticker:
         st.write(cashflow)
 
 if not annual_financials.empty:
-# 1) define the metrics you care about
+  # 1) define the metrics you care about
   import pandas as pd
   
   top_metrics = ["Total Revenue", "Gross Profit", "EBITDA", "EBIT"]
@@ -167,7 +167,7 @@ if not annual_financials.empty:
       year = pd.to_datetime(col).year
   
       raw_inv = safe_val(balance_sheet, "Inventory", col) or 0
-      raw_ar  = safe_val(balance_sheet, "Net Receivables", col) or 0
+      raw_ar  = safe_val(balance_sheet, "Accounts Receivable", col) or 0
       raw_ap  = safe_val(balance_sheet, "Accounts Payable", col) or 0
       raw_cogs= safe_val(annual_financials, "Cost Of Revenue", col) or 0
       raw_rev = safe_val(annual_financials, "Total Revenue", col) or 0
@@ -190,7 +190,7 @@ if not annual_financials.empty:
   # 8) build and display DataFrames
   raw_df = pd.DataFrame(
       raw_inputs,
-      index=["Inventory (M)", "Net Receivables (M)", "Accounts Payable (M)", "COGS (M)", "Revenue (M)"]
+      index=["Inventory (M)", "Accounts Receivable (M)", "Accounts Payable (M)", "COGS (M)", "Revenue (M)"]
   )
   st.subheader("Working Capital Raw Inputs (M) — Last 3 Years")
   st.table(raw_df)
@@ -198,4 +198,5 @@ if not annual_financials.empty:
   wc_df = pd.DataFrame(wc_metrics, index=["DIO", "DSO", "DPO"])
   st.subheader("Working Capital Metrics (Days) — Last 3 Years")
   st.table(wc_df)
+
 
