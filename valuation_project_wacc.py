@@ -132,6 +132,21 @@ if ticker:
         ebit_nopat = ebit * (1 - taxrate)
         fcf_ebit   = ebit_nopat + damo - ppe - wcchg
 
+        # Convert to whole numbers and percentages
+        nopat_m     = int(round(nopat/1e6))
+        fcf_m       = int(round(fcf/1e6))
+        fcf_ebit_m  = int(round(fcf_ebit/1e6))
+        td_m        = int(round(td/1e6))
+        te_m        = int(round(te/1e6))
+        tic_m       = int(round(tic/1e6))
+        val_g_m     = int(round(val_g/1e6))
+        val_ng_m    = int(round(val_ng/1e6))
+        mc_m        = int(round(info.get('marketCap', 0)/1e6))
+        wacc_pct    = f"{wacc*100:.0f}%"
+        beta_val    = round(beta, 2)
+        roic_pct    = f"{roic*100:.0f}%"
+        gr_pct      = f"{gr*100:.0f}%"
+
         # Summary Table
         st.subheader("Summary Table")
         df_sum = pd.DataFrame({
@@ -151,23 +166,21 @@ if ticker:
                 'Market Cap (M)'
             ],
             'Value': [
-                nopat/1e6,
-                fcf/1e6,
-                fcf_ebit/1e6,
-                td/1e6,
-                te/1e6,
-                tic/1e6,
-                wacc,
-                beta,
-                roic,
-                gr,
-                val_g/1e6,
-                val_ng/1e6,
-                info.get('marketCap', 0)/1e6
+                nopat_m,
+                fcf_m,
+                fcf_ebit_m,
+                td_m,
+                te_m,
+                tic_m,
+                wacc_pct,
+                beta_val,
+                roic_pct,
+                gr_pct,
+                val_g_m,
+                val_ng_m,
+                mc_m
             ]
         })
-        # round all to integers
-        df_sum['Value'] = df_sum['Value'].round().astype(int)
         st.table(df_sum)
 
         # GAAP Income Statement
