@@ -27,20 +27,11 @@ def get_10yr_treasury_yield():
     hist = yf.Ticker("^TNX").history(period="1mo")
     return hist["Close"].iloc[-1] / 100 if not hist.empty else 0
 
-# Safe getters (moved to module-level so available everywhere)
-def safe_latest(df, field, col=None):
-    """Return value for 'field' in column 'col' (latest if None)."""
-    if df.columns.size == 0:
-        return 0
-    key = col if col is not None else df.columns[0]
-    return df.at[field, key] if field in df.index else 0
-
-def safe_col(df, field, col):
-    """Return value for 'field' in specified 'col'."""
-    return df.at[field, col] if field in df.index else 0
+API_KEY = "26c01b09f8083e30a1ee9cb929188a74"
+FRED_URL = "https://api.stlouisfed.org/fred/series/observations"
+FRED_SERIES = {"MRTSIR444USS": "Industry Inv/Sales Ratio: Building Materials & Garden Equipment Dealers"}
 
 # Fetch ticker (no cache)
-def fetch_ticker(t): return yf.Ticker(t) (no cache)
 def fetch_ticker(t): return yf.Ticker(t)
 
 @st.cache_data
