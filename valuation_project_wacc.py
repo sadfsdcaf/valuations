@@ -27,12 +27,26 @@ def get_10yr_treasury_yield():
     hist = yf.Ticker("^TNX").history(period="1mo")
     return hist["Close"].iloc[-1] / 100 if not hist.empty else 0
 
+# FRED config
 API_KEY = "26c01b09f8083e30a1ee9cb929188a74"
 FRED_URL = "https://api.stlouisfed.org/fred/series/observations"
 FRED_SERIES = {"MRTSIR444USS": "Industry Inv/Sales Ratio: Building Materials & Garden Equipment Dealers"}
 
+# ——— Safe getters ———
+def safe_latest(df, field, col=None):
+    """Return value for 'field' in column 'col' (latest if None)."""
+    if df.columns.size == 0:
+        return 0
+    key = col if col is not None else df.columns[0]
+    return df.at[field, key] if field in df.index else 0
+
+def safe_col(df, field, col):
+    """Return value for 'field' in specified 'col'."""
+    return df.at[field, col] if field in df.index else 0
+
 # Fetch ticker (no cache)
-def fetch_ticker(t): return yf.Ticker(t)
+def fetch_ticker(t):
+    return yf.Ticker(t)
 
 @st.cache_data
 def get_fred_data(series_id, start, end):
@@ -62,7 +76,6 @@ if ticker:
     # Live Price
     live = info.get('currentPrice') or info.get('regularMarketPrice')
     if live:
-        # show as whole number
         st.metric("Live Price", f"${live:.0f}")
 
     # Historical Price
@@ -80,45 +93,36 @@ if ticker:
     if fin.empty:
         st.warning("No annual financials found.")
     else:
+        # current period
         latest = fin.columns[0]
-        # Safe getters
-        def safe_latest(df, field): return df.at[field, latest] if field in df.index else 0
-        def safe_col(df, field, col): return df.at[field, col] if field in df.index else 0
 
-        # Compute metrics
-        total_revenue = safe_latest(fin, 'Total Revenue')
-        pretax         = safe_latest(fin, 'Pretax Income')
-        taxprov        = safe_latest(fin, 'Tax Provision')
-        taxrate        = (taxprov / pretax) if pretax else 0
-        nopat          = pretax * (1 - taxrate)
-        damo           = safe_latest(cf, 'Depreciation Amortization Depletion')
-        ppe            = abs(safe_latest(cf, 'Net PPE Purchase And Sale'))
-        wcchg          = safe_latest(cf, 'Change In Working Capital')
-        fcf            = nopat + damo - ppe - wcchg
+        # Compute core metrics
+        pretax  = safe_latest(fin, 'Pretax Income')
+        taxprov = safe_latest(fin, 'Tax Provision')
+        taxrate = (taxprov / pretax) if pretax else 0
+        nopat   = pretax * (1 - taxrate)
+        damo    = safe_latest(cf, 'Depreciation Amortization Depletion')
+        ppe     = abs(safe_latest(cf, 'Net PPE Purchase And Sale'))
+        wcchg   = safe_latest(cf, 'Change In Working Capital')
+        fcf     = nopat + damo - ppe - wcchg
 
         # Debt & Equity
         ltd = safe_latest(bs, 'Long Term Debt')
         std = safe_latest(bs, 'Short Term Debt')
-        td  = safe_latest(bs, 'Total Debt')
-        te  = safe_latest(bs, 'Total Equity Gross Minority Interest')
+        td  = ltd + std
+        te  = safe_latest(bs, 'Total Stockholder Equity')
         tic = td + te
 
-        # WACC inputs
+        # Cost of Capital
         beta  = info.get('beta', 1)
-        MRP =.05
-
         ry    = get_10yr_treasury_yield()
-        c_bond = ry + .03 
-        spread = ry - c_bond
-        re = ry + MRP * beta
-        rd = ry + spread
-        er_eq = ry + beta * MRP
+        er_eq = ry + beta * 0.05
         er_de = ry + 0.01
         di    = td / tic if tic else 0
         ei    = te / tic if tic else 0
         wacc  = (ei * er_eq) + (di * er_de * (1 - taxrate))
 
-        # ROIC & growth
+        # Returns & Growth
         rr   = ((ppe - damo) + wcchg) / nopat if nopat else 0
         roic = nopat / tic if tic else 0
         gr   = rr / roic if roic else 0
@@ -132,7 +136,7 @@ if ticker:
         ebit_nopat = ebit * (1 - taxrate)
         fcf_ebit   = ebit_nopat + damo - ppe - wcchg
 
-        # Convert to whole numbers and percentages
+        # Convert to whole numbers & percentages
         nopat_m     = int(round(nopat/1e6))
         fcf_m       = int(round(fcf/1e6))
         fcf_ebit_m  = int(round(fcf_ebit/1e6))
@@ -151,46 +155,27 @@ if ticker:
         st.subheader("Summary Table")
         df_sum = pd.DataFrame({
             'Metric': [
-                'NOPAT (M)',
-                'FCF (pretax NOPAT, M)',
-                'FCF (EBIT basis, M)',
-                'Total Debt (M)',
-                'Total Equity (M)',
-                'Invested Capital (M)',
-                'WACC',
-                'Beta',
-                'ROIC',
-                'Growth Rate',
-                'Valuation (Growth)',
-                'Valuation (No Growth)',
-                'Market Cap (M)'
+                'NOPAT (M)', 'FCF (pretax NOPAT, M)', 'FCF (EBIT basis, M)',
+                'Total Debt (M)', 'Total Equity (M)', 'Invested Capital (M)',
+                'WACC', 'Beta', 'ROIC', 'Growth Rate',
+                'Valuation (Growth)', 'Valuation (No Growth)', 'Market Cap (M)'
             ],
             'Value': [
-                nopat_m,
-                fcf_m,
-                fcf_ebit_m,
-                td_m,
-                te_m,
-                tic_m,
-                wacc_pct,
-                beta_val,
-                roic_pct,
-                gr_pct,
-                val_g_m,
-                val_ng_m,
-                mc_m
+                nopat_m, fcf_m, fcf_ebit_m,
+                td_m, te_m, tic_m,
+                wacc_pct, beta_val, roic_pct, gr_pct,
+                val_g_m, val_ng_m, mc_m
             ]
         })
         st.table(df_sum)
 
         # GAAP Income Statement
         st.subheader("Free Cash Flow")
-        for itm in ["EBIT"]:
-            if itm in fin.index:
-                st.write(f"**{itm}**: {safe_latest(fin, itm)/1e6:.0f}M")
+        if 'EBIT' in fin.index:
+            st.write(f"**EBIT**: {safe_latest(fin, 'EBIT')/1e6:.0f}M")
 
-        # Financial Statement (M)
-        st.subheader("Income Statement (M) — Last Published")
+        # Full statements
+        st.subheader("Income Statement (M)")
         st.dataframe(fin.applymap(format_millions))
         st.subheader("Balance Sheet (M)")
         st.dataframe(bs.applymap(format_millions))
@@ -229,7 +214,7 @@ if ticker:
         wc_df = pd.DataFrame(wc_list).set_index('Year')
         st.table(wc_df)
 
-# ——— Overlay ———
+# Overlay
 st.markdown("---")
 st.subheader("Inventory/Sales Overlay")
 col1, col2 = st.columns(2)
@@ -238,19 +223,19 @@ with col1:
 with col2:
     ed = st.date_input("FRED End", pd.to_datetime("2025-12-31"))
 if st.button("Plot Inv/Sales Overlay"):
-    sid,_ = next(iter(FRED_SERIES.items()))
-    df_f  = get_fred_data(sid, sd.strftime('%Y-%m-%d'), ed.strftime('%Y-%m-%d'))
+    sid, _ = next(iter(FRED_SERIES.items()))
+    df_f = get_fred_data(sid, sd.strftime('%Y-%m-%d'), ed.strftime('%Y-%m-%d'))
     if df_f is None:
         st.warning('No FRED data.')
     else:
         tk_hd = fetch_ticker('HD')
         f_hd, b_hd = tk_hd.financials, tk_hd.balance_sheet
         per = [c for c in f_hd.columns if c in b_hd.columns]
-        dates  = [pd.to_datetime(c) for c in per]
-        invs   = [safe_col(b_hd, 'Inventory', c) for c in per]
-        revs   = [safe_col(f_hd, 'Total Revenue', c) for c in per]
-        ratios = [round(i/r*100/12,2) if r else None for i,r in zip(invs,revs)]
-        hd_df  = pd.DataFrame({'InvSales%': ratios}, index=dates)
+        dates = [pd.to_datetime(c) for c in per]
+        invs  = [safe_col(b_hd, 'Inventory', c) for c in per]
+        revs  = [safe_col(f_hd, 'Total Revenue', c) for c in per]
+        ratios= [round(i/r*100/12,2) if r else None for i,r in zip(invs,revs)]
+        hd_df = pd.DataFrame({'InvSales%': ratios}, index=dates)
         st.dataframe(hd_df)
         fig, ax = plt.subplots(figsize=(10,5))
         ax.plot(df_f['date'], df_f['value'], label='Industry')
