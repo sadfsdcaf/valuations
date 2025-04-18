@@ -121,7 +121,7 @@ if ticker:
 
 if not annual_financials.empty:
   # 1) define the metrics you care about
-  top_metrics = ["Total Revenue", "Gross Profit", "EBIT", "EBITDA"]
+  top_metrics = ["Total Revenue", "Gross Profit", "EBITDA", "EBIT"]
   
   # 2) grab the three most‐recent columns
   last3 = annual_financials.columns[:3]
