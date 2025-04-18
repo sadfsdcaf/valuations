@@ -31,7 +31,17 @@ def to_millions(x):
     return round(x / 1e6, 2) if pd.notnull(x) else 0
 
 # Fetch functions
+from yfinance import YFRateLimitError
+import time
+
 def fetch_stock_data(ticker):
+    """Fetch a yfinance Ticker, retrying if rate limit is hit."""
+    try:
+        return yf.Ticker(ticker)
+    except YFRateLimitError:
+        st.warning("Yahoo Finance rate limit reached. Retrying in 60 seconds...")
+        time.sleep(60)
+        return yf.Ticker(ticker)(ticker):
     return yf.Ticker(ticker)
 
 @st.cache_data
@@ -172,7 +182,7 @@ if ticker:
         st.subheader("Working Capital Metrics (Days)")
         st.table(wc_df)
 
-# ——— FRED + Home Depot Overlay ———
+# ——— FRED + Home Depot Historical Overlay ———
 st.markdown("---")
 st.subheader("Inventory/Sales Ratio: Industry vs. Home Depot (2000–Present)")
 col1, col2 = st.columns(2)
@@ -227,6 +237,3 @@ if st.button("Fetch & Plot Historical Inv/Sales Overlay"):
         st.pyplot(fig)
 
 st.markdown("Data sourced from Yahoo Finance, FRED & Alpha Vantage.")
-
-
-
