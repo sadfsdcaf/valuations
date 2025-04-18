@@ -207,9 +207,8 @@ if st.button("Fetch & Plot Inv/Sales Overlay"):
             except:
                 revs.append(0)
 
-        # Calculate Inv/Sales ratio (%)
-        dates = [pd.to_datetime(c) for c in periods]
-        ratios = [round((inv/rev) * 100, 2) if rev else None for inv, rev in zip(invs, revs)]
+                # Calculate Inv/Sales ratio (%) and divide by 12 for monthly equivalent
+        ratios = [round((inv/rev) * 100 / 12, 2) if rev else None for inv, rev in zip(invs, revs)]
 
         # Display raw tables for debug
         hd_df = pd.DataFrame({"Inventory": invs, "Revenue": revs}, index=dates)
