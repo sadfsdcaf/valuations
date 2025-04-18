@@ -8,7 +8,7 @@ from datetime import datetime
 # ——— Page config ———
 st.set_page_config(page_title="Financial + FRED Dashboard", layout="wide")
 
-st.title("Annual Financials with NOPAT, FCF, and Inv/Sales Overlay + Live Price")
+st.title("Annual Financials with NOPAT, FCF, Inv/Sales Overlay + Live & Historical Price")
 
 st.markdown("""
 This dashboard:
@@ -16,7 +16,7 @@ This dashboard:
    and Working‑Capital metrics (DIO, DSO, DPO, CCC).
 2. Fetches the Industry Inventory/Sales ratio (Building Materials & Garden Equipment Dealers) from FRED.
 3. Calculates and plots Home Depot’s Inventory/Sales ratio based on the same periods provided by yFinance.
-4. Displays the live stock price for the selected ticker.
+4. Displays the live stock price and historical price chart for the selected ticker.
 """)
 
 # ——— Constants & Helpers ———
@@ -27,6 +27,7 @@ FRED_SERIES = {"MRTSIR444USS": "Industry Inv/Sales Ratio: Building Materials & G
 def format_millions(x):
     return round(x/1e6,2) if pd.notnull(x) else 0
 
+@st.cache_data
 def fetch_ticker(ticker):
     return yf.Ticker(ticker)
 
@@ -54,10 +55,19 @@ ticker = st.text_input("Enter Ticker:", "AAPL")
 if ticker:
     tk = fetch_ticker(ticker)
     info = tk.info
+
     # Live Price
     live_price = info.get('currentPrice') or info.get('regularMarketPrice')
     if live_price:
         st.metric(label="Live Price", value=f"${live_price:.2f}")
+
+    # Historical Price
+    st.subheader("Historical Price (Close)")
+    hist = tk.history(period="max")
+    if not hist.empty:
+        st.line_chart(hist['Close'])
+    else:
+        st.warning("No historical price data available.")
 
     # Annual fundamentals
     fin = tk.financials
@@ -72,10 +82,8 @@ if ticker:
             return df.at[field, col] if field in df.index else 0
 
         # Core metrics
-        revenue = sv(fin, 'Total Revenue', latest)
         pretax  = sv(fin, 'Pretax Income', latest)
         taxprov = sv(fin, 'Tax Provision', latest)
-        dep     = sv(fin, 'Reconciled Depreciation', latest)
         taxrate = (taxprov/pretax) if pretax else 0
         nopat   = (pretax * (1-taxrate))/1e6
         damo    = sv(cf, 'Depreciation Amortization Depletion', latest)
@@ -91,7 +99,7 @@ if ticker:
         st.subheader("Summary")
         df_sum = pd.DataFrame({
             'Metric':['NOPAT (M)','FCF (M)','Total Debt (M)','Total Equity (M)','Market Cap (M)'],
-            'Value':[nopat, fcf, totald, teq, format_millions(live_price)]
+            'Value':[nopat, fcf, totald, teq, format_millions(info.get('marketCap', 0))]
         })
         st.table(df_sum)
 
@@ -99,8 +107,7 @@ if ticker:
         st.subheader("GAAP Income Statement")
         for item in ["Total Revenue","Cost Of Revenue","Gross Profit","EBIT","EBITDA"]:
             if item in fin.index:
-                val = sv(fin, item, latest)
-                st.write(f"**{item}**: {val/1e6:.2f}M")
+                st.write(f"**{item}**: {sv(fin, item, latest)/1e6:.2f}M")
 
         # Balance & Cash Flow
         st.subheader("Balance Sheet (M)")
