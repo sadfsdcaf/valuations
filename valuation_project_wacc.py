@@ -90,7 +90,8 @@ if ticker:
         pretax         = safe_latest(fin, 'Pretax Income')
         taxprov        = safe_latest(fin, 'Tax Provision')
         taxrate        = (taxprov / pretax) if pretax else 0
-        nopat          = pretax * (1 - taxrate)
+        ebit           = safe_latest(fin, 'EBIT')
+        nopat          = safe_latest(fin, 'EBIT') * (1 - taxrate)
         damo           = safe_latest(cf, 'Depreciation Amortization Depletion')
         ppe            = abs(safe_latest(cf, 'Net PPE Purchase And Sale'))
         wcchg          = safe_latest(cf, 'Change In Working Capital')
@@ -100,7 +101,7 @@ if ticker:
         ltd = safe_latest(bs, 'Long Term Debt')
         std = safe_latest(bs, 'Short Term Debt')
         td  = ltd + std
-        te  = safe_latest(bs, 'Total Stockholder Equity')
+        te  = safe_latest(bs, 'Total Equity Gross Minority Interest')
         tic = td + te
 
         # WACC inputs
@@ -122,7 +123,7 @@ if ticker:
         val_ng = nopat / wacc if wacc else 0
 
         # EBIT-based FCF
-        ebit       = safe_latest(fin, 'EBIT')
+
         ebit_nopat = safe_latest(fin, 'EBIT') * (1 - taxrate)
         fcf_ebit   = ebit_nopat + damo - ppe - wcchg
 
