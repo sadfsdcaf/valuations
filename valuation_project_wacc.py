@@ -94,14 +94,26 @@ if ticker:
         # Summary Table
         st.subheader("Summary Table")
         df_sum = pd.DataFrame({
-            'Metric':['NOPAT (M)','FCF (M)','Total Debt (M)','Total Equity (M)','WACC','Beta','ROIC','Growth Rate','Valuation (Growth)','Valuation (No Growth)','Market Cap (M)'],
-            'Value':[nopat/1e6, fcf/1e6, td/1e6, te/1e6, wacc, beta, roic, gr, val_g, val_ng, format_millions(info.get('marketCap',0))]
+            'Metric': [
+                'NOPAT (M)',
+                'FCF (pretax NOPAT, M)',
+                'FCF (EBIT basis, M)',   # new row
+                'Total Debt (M)',
+                …
+            ],
+            'Value': [
+                nopat/1e6,
+                fcf/1e6,
+                fcf_ebit/1e6,            # new value
+                td/1e6,
+                …
+            ]
         })
         st.table(df_sum)
 
         # GAAP Income Statement
-        st.subheader("GAAP Income Statement")
-        for itm in ["Total Revenue","Cost Of Revenue","Gross Profit","EBIT","EBITDA"]:
+        st.subheader("Free Cash Flow")
+        for itm in ["EBIT"]:
             if itm in fin.index:
                 st.write(f"**{itm}**: {safe_latest(fin, itm)/1e6:.2f}M")
 
