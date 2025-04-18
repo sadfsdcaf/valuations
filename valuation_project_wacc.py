@@ -189,8 +189,8 @@ if st.button("Fetch & Plot Historical Inv/Sales Overlay"):
         st.warning("No FRED data.")
     else:
         # Display FRED raw data
-    st.subheader("FRED Industry Inv/Sales Raw Data")
-    st.dataframe(df_f.set_index("date"))
+      st.subheader("FRED Industry Inv/Sales Raw Data")
+      st.dataframe(df_f.set_index("date"))
 
     # 2) Fetch Home Depot annual fundamentals via Alpha Vantage for full history
     from alpha_vantage.fundamentaldata import FundamentalData
@@ -227,6 +227,7 @@ if st.button("Fetch & Plot Historical Inv/Sales Overlay"):
     st.pyplot(fig)
 
 st.markdown("Data sourced from Yahoo Finance, FRED & Alpha Vantage.")
+
 
 
 
