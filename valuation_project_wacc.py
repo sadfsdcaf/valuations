@@ -64,43 +64,46 @@ if ticker:
         st.warning("No annual financials found.")
     else:
         latest=fin.columns[0]
-        def sv(df,field): return df.at[field,latest] if field in df.index else 0
+        # Safe getters for latest and for arbitrary column
+        def safe_latest(df, field): return df.at[field, latest] if field in df.index else 0
+        def safe_col(df, field, col): return df.at[field, col] if field in df.index else 0
 
         # Compute metrics
-        total_revenue=sv(fin,'Total Revenue')
-        pretax=sv(fin,'Pretax Income'); taxprov=sv(fin,'Tax Provision')
-        taxrate=(taxprov/pretax) if pretax else 0
-        nopat=pretax*(1-taxrate)
-        damo=sv(cf,'Depreciation Amortization Depletion')
-        ppe=abs(sv(cf,'Net PPE Purchase And Sale'))
-        wcchg=sv(cf,'Change In Working Capital')
-        fcf=nopat+damo-ppe-wcchg
-        ltd=sv(bs,'Long Term Debt'); cd=sv(bs,'Current Debt')
-        td=ltd+cd; te=sv(bs,'Total Equity Gross Minority Interest')
-        tic=td+te
-        beta=info.get('beta',1)
-        ry=get_10yr_treasury_yield()
-        er_eq=ry+beta*0.05; er_de=ry+0.01
-        di=td/tic if tic else 0; ei=te/tic if tic else 0
-        wacc=(ei*er_eq)+(di*er_de*(1-taxrate))
-        rr=((ppe-damo)+wcchg)/nopat if nopat else 0
-        roic=nopat/tic if tic else 0
-        gr=rr/roic if roic else 0
-        val_g=nopat/(wacc-gr) if wacc>gr else 0
-        val_ng=nopat/wacc if wacc else 0
+        total_revenue = safe_latest(fin, 'Total Revenue')
+        pretax = safe_latest(fin, 'Pretax Income'); taxprov = safe_latest(fin, 'Tax Provision')
+        taxrate = (taxprov/pretax) if pretax else 0
+        nopat = pretax * (1 - taxrate)
+        damo = safe_latest(cf, 'Depreciation Amortization Depletion')
+        ppe = abs(safe_latest(cf, 'Net PPE Purchase And Sale'))
+        wcchg = safe_latest(cf, 'Change In Working Capital')
+        fcf = nopat + damo - ppe - wcchg
+        ltd = safe_latest(bs, 'Long Term Debt'); cd = safe_latest(bs, 'Current Debt')
+        td = ltd + cd; te = safe_latest(bs, 'Total Equity Gross Minority Interest')
+        tic = td + te
+        beta = info.get('beta',1)
+        ry = get_10yr_treasury_yield()
+        er_eq = ry + beta*0.05; er_de = ry + 0.01
+        di = td/tic if tic else 0; ei = te/tic if tic else 0
+        wacc = (ei*er_eq) + (di*er_de*(1-taxrate))
+        rr = ((ppe - damo) + wcchg) / nopat if nopat else 0
+        roic = nopat / tic if tic else 0
+        gr = rr / roic if roic else 0
+        val_g = nopat / (wacc - gr) if wacc>gr else 0
+        val_ng = nopat / wacc if wacc else 0
 
         # Summary Table
         st.subheader("Summary Table")
-        df_sum=pd.DataFrame({
+        df_sum = pd.DataFrame({
             'Metric':['NOPAT (M)','FCF (M)','Total Debt (M)','Total Equity (M)','WACC','ROIC','Growth Rate','Valuation (Growth)','Valuation (No Growth)','Market Cap (M)'],
-            'Value':[nopat/1e6,fcf/1e6,td/1e6,te/1e6,wacc,roic,gr,val_g,val_ng,format_millions(info.get('marketCap',0))]
+            'Value':[nopat/1e6, fcf/1e6, td/1e6, te/1e6, wacc, roic, gr, val_g, val_ng, format_millions(info.get('marketCap',0))]
         })
         st.table(df_sum)
 
-        # GAAP Income
+        # GAAP Income Statement
         st.subheader("GAAP Income Statement")
         for itm in ["Total Revenue","Cost Of Revenue","Gross Profit","EBIT","EBITDA"]:
-            if itm in fin.index: st.write(f"**{itm}**: {sv(fin,itm)/1e6:.2f}M")
+            if itm in fin.index:
+                st.write(f"**{itm}**: {safe_latest(fin, itm)/1e6:.2f}M")
 
         # Balance & Cashflow
         st.subheader("Balance Sheet (M)")
@@ -111,56 +114,58 @@ if ticker:
         # Key Financials last 3 yrs
         st.subheader("Key Financials (M) — Last 3 Years")
         mets=["Total Revenue","Gross Profit","EBIT","EBITDA"]
-        c3=fin.columns[:3]
-        kdf=fin.reindex(mets).loc[:,c3].applymap(format_millions)
-        yrs=[pd.to_datetime(c).year for c in c3][::-1]
-        kdf.columns=yrs; st.table(kdf)
+        c3 = fin.columns[:3]
+        kdf = fin.reindex(mets).loc[:,c3].applymap(format_millions)
+        yrs = [pd.to_datetime(c).year for c in c3][::-1]
+        kdf.columns = yrs
+        st.table(kdf)
 
         # YoY Growth
         st.subheader("YoY Growth (%)")
-        gdf=kdf.pct_change(axis=1).iloc[:,1:]*100
-        gdf.columns=[f"{b} vs {a}" for a,b in zip(yrs[:-1],yrs[1:])]
+        gdf = kdf.pct_change(axis=1).iloc[:,1:]*100
+        gdf.columns = [f"{b} vs {a}" for a,b in zip(yrs[:-1], yrs[1:])]
         st.table(gdf)
 
         # Working Capital & CCC
         st.subheader("Working Capital Metrics (Days)")
-        wdata=[]
+        wc_list=[]
         for c in c3:
-            inv = sv(bs,"Inventory",c)
-            ar  = sv(bs,"Accounts Receivable",c)
-            ap  = sv(bs,"Accounts Payable",c)
-            cogs= sv(fin,"Cost Of Revenue",c)
-            rev = sv(fin,"Total Revenue",c)
+            inv = safe_col(bs, 'Inventory', c)
+            ar  = safe_col(bs, 'Accounts Receivable', c)
+            ap  = safe_col(bs, 'Accounts Payable', c)
+            cogs= safe_col(fin, 'Cost Of Revenue', c)
+            rev = safe_col(fin, 'Total Revenue', c)
             dio = round(inv/cogs*365,1) if cogs else None
             dso = round(ar/rev*365,1) if rev else None
             dpo = round(ap/cogs*365,1) if cogs else None
             ccc = round((dio or 0)+(dpo or 0)-(dso or 0),1)
-            wdata.append({"Year":pd.to_datetime(c).year,
-                          "DIO":dio,"DSO":dso,"DPO":dpo,"CCC":ccc})
-        wdf = pd.DataFrame(wdata).set_index("Year")
-        st.table(wdf)
+            wc_list.append({'Year':pd.to_datetime(c).year,'DIO':dio,'DSO':dso,'DPO':dpo,'CCC':ccc})
+        wc_df = pd.DataFrame(wc_list).set_index('Year')
+        st.table(wc_df)
 
 # ——— Overlay ———
 st.markdown("---")
 st.subheader("Inventory/Sales Overlay")
-col1,col2=st.columns(2)
+col1,col2 = st.columns(2)
 with col1: sd=st.date_input("FRED Start",pd.to_datetime("2000-01-01"))
 with col2: ed=st.date_input("FRED End",pd.to_datetime("2025-12-31"))
 if st.button("Plot Inv/Sales Overlay"):
-    sid,_=next(iter(FRED_SERIES.items()))
-    df_f=get_fred_data(sid,sd.strftime('%Y-%m-%d'),ed.strftime('%Y-%m-%d'))
+    sid,_ = next(iter(FRED_SERIES.items()))
+    df_f = get_fred_data(sid,sd.strftime('%Y-%m-%d'),ed.strftime('%Y-%m-%d'))
     if df_f is None: st.warning('No FRED data.')
     else:
-        tk_hd=fetch_ticker('HD'); f_hd, b_hd=tk_hd.financials,tk_hd.balance_sheet
-        per=[c for c in f_hd.columns if c in b_hd.columns]
-        dt=[pd.to_datetime(c) for c in per]
-        invs=[sv(b_hd,'Inventory') for c in per]
-        revs=[sv(f_hd,'Total Revenue') for c in per]
-        r=[round(i/r*100/12,2) if r else None for i,r in zip(invs,revs)]
-        hd_df=pd.DataFrame({'InvSales%':r},index=dt); st.dataframe(hd_df)
-        fig,ax=plt.subplots(figsize=(10,5))
-        ax.plot(df_f['date'],df_f['value'],label='Industry')
-        ax.plot(hd_df.index,hd_df['InvSales%'],marker='o',label='Home Depot')
+        tk_hd = fetch_ticker('HD')
+        f_hd, b_hd = tk_hd.financials, tk_hd.balance_sheet
+        per = [c for c in f_hd.columns if c in b_hd.columns]
+        dates = [pd.to_datetime(c) for c in per]
+        invs = [safe_col(b_hd, 'Inventory', c) for c in per]
+        revs = [safe_col(f_hd, 'Total Revenue', c) for c in per]
+        ratios = [round(i/r*100/12,2) if r else None for i,r in zip(invs,revs)]
+        hd_df = pd.DataFrame({'InvSales%': ratios}, index=dates)
+        st.dataframe(hd_df)
+        fig, ax = plt.subplots(figsize=(10,5))
+        ax.plot(df_f['date'], df_f['value'], label='Industry')
+        ax.plot(hd_df.index, hd_df['InvSales%'], marker='o', label='Home Depot')
         ax.set_xlabel('Date'); ax.set_ylabel('Inv/Sales %'); ax.legend(); ax.grid(True)
         st.pyplot(fig)
 
