@@ -64,7 +64,7 @@ if ticker:
         st.warning("No annual financials found.")
     else:
         latest=fin.columns[0]
-        # Safe getters for latest and for arbitrary column
+        # Safe getters
         def safe_latest(df, field): return df.at[field, latest] if field in df.index else 0
         def safe_col(df, field, col): return df.at[field, col] if field in df.index else 0
 
@@ -113,23 +113,22 @@ if ticker:
 
         # Key Financials last 5 yrs
         st.subheader("Key Financials (M) — Last 5 Years")
-        mets   = ["Total Revenue","Gross Profit","EBIT","EBITDA"]
-        last5  = fin.columns[:5]                                 # grabs the 5 most recent columns
-        kdf    = fin.reindex(mets).loc[:, last5].applymap(format_millions)
-        yrs    = [pd.to_datetime(c).year for c in last5][::-1]   # reverse so oldest → newest
-        kdf.columns = yrs
-        st.table(kdf)
-        
-        # YoY Growth for those five years (yields four growth columns)
+        mets=["Total Revenue","Gross Profit","EBIT","EBITDA"]
+        last5=fin.columns[:5]
+        kdf=fin.reindex(mets).loc[:, last5].applymap(format_millions)
+        yrs=[pd.to_datetime(c).year for c in last5][::-1]
+        kdf.columns=yrs; st.table(kdf)
+
+        # YoY Growth
         st.subheader("Year‑over‑Year Growth (%)")
-        gdf = kdf.pct_change(axis=1).iloc[:, 1:] * 100
-        gdf.columns = [f"{c2} vs {c1}" for c1, c2 in zip(yrs[:-1], yrs[1:])]
+        gdf=kdf.pct_change(axis=1).iloc[:,1:]*100
+        gdf.columns=[f"{b} vs {a}" for a,b in zip(yrs[:-1], yrs[1:])]
         st.table(gdf)
 
         # Working Capital & CCC
         st.subheader("Working Capital Metrics (Days)")
         wc_list=[]
-        for c in c3:
+        for c in last5:
             inv = safe_col(bs, 'Inventory', c)
             ar  = safe_col(bs, 'Accounts Receivable', c)
             ap  = safe_col(bs, 'Accounts Payable', c)
@@ -140,33 +139,30 @@ if ticker:
             dpo = round(ap/cogs*365,1) if cogs else None
             ccc = round((dio or 0)+(dpo or 0)-(dso or 0),1)
             wc_list.append({'Year':pd.to_datetime(c).year,'DIO':dio,'DSO':dso,'DPO':dpo,'CCC':ccc})
-        wc_df = pd.DataFrame(wc_list).set_index('Year')
-        st.table(wc_df)
+        wc_df=pd.DataFrame(wc_list).set_index('Year'); st.table(wc_df)
 
 # ——— Overlay ———
 st.markdown("---")
 st.subheader("Inventory/Sales Overlay")
-col1,col2 = st.columns(2)
+col1,col2=st.columns(2)
 with col1: sd=st.date_input("FRED Start",pd.to_datetime("2000-01-01"))
 with col2: ed=st.date_input("FRED End",pd.to_datetime("2025-12-31"))
 if st.button("Plot Inv/Sales Overlay"):
-    sid,_ = next(iter(FRED_SERIES.items()))
-    df_f = get_fred_data(sid,sd.strftime('%Y-%m-%d'),ed.strftime('%Y-%m-%d'))
+    sid,_=next(iter(FRED_SERIES.items()))
+    df_f=get_fred_data(sid,sd.strftime('%Y-%m-%d'),ed.strftime('%Y-%m-%d'))
     if df_f is None: st.warning('No FRED data.')
     else:
-        tk_hd = fetch_ticker('HD')
-        f_hd, b_hd = tk_hd.financials, tk_hd.balance_sheet
-        per = [c for c in f_hd.columns if c in b_hd.columns]
-        dates = [pd.to_datetime(c) for c in per]
-        invs = [safe_col(b_hd, 'Inventory', c) for c in per]
-        revs = [safe_col(f_hd, 'Total Revenue', c) for c in per]
-        ratios = [round(i/r*100/12,2) if r else None for i,r in zip(invs,revs)]
-        hd_df = pd.DataFrame({'InvSales%': ratios}, index=dates)
-        st.dataframe(hd_df)
-        fig, ax = plt.subplots(figsize=(10,5))
-        ax.plot(df_f['date'], df_f['value'], label='Industry')
-        ax.plot(hd_df.index, hd_df['InvSales%'], marker='o', label='Home Depot')
-        ax.set_xlabel('Date'); ax.set_ylabel('Inv/Sales %'); ax.legend(); ax.grid(True)
+        tk_hd=fetch_ticker('HD'); f_hd,b_hd=tk_hd.financials,tk_hd.balance_sheet
+        per=[c for c in f_hd.columns if c in b_hd.columns]
+        dates=[pd.to_datetime(c) for c in per]
+        invs=[safe_col(b_hd,'Inventory',c) for c in per]
+        revs=[safe_col(f_hd,'Total Revenue',c) for c in per]
+        ratios=[round(i/r*100/12,2) if r else None for i,r in zip(invs,revs)]
+        hd_df=pd.DataFrame({'InvSales%':ratios},index=dates); st.dataframe(hd_df)
+        fig,ax=plt.subplots(figsize=(10,5))
+        ax.plot(df_f['date'],df_f['value'],label='Industry')
+        ax.plot(hd_df.index,hd_df['InvSales%'],marker='o',label='Home Depot')
+        ax.set_xlabel('Date');ax.set_ylabel('Inv/Sales %');ax.legend();ax.grid(True)
         st.pyplot(fig)
 
 st.markdown("Data from Yahoo Finance & FRED.")
