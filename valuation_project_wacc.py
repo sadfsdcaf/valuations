@@ -124,16 +124,21 @@ if ticker:
 
         # Working Capital & CCC
         st.subheader("Working Capital Metrics (Days)")
-        wc_list=[]
-        for c in c3:
-            inv=sv(bs,'Inventory'); ar=sv(bs,'Accounts Receivable'); ap=sv(bs,'Accounts Payable')
-            cog=sv(fin,'Cost Of Revenue'); rev=sv(fin,'Total Revenue')
-            dio=round(inv/cog*365,1) if cog else None
-            dso=round(ar/rev*365,1) if rev else None
-            dpo=round(ap/cog*365,1) if cog else None
-            ccc=round((dio or 0)+(dpo or 0)-(dso or 0),1)
-            wc_list.append({'Year':pd.to_datetime(c).year,'DIO':dio,'DSO':dso,'DPO':dpo,'CCC':ccc})
-        wc_df=pd.DataFrame(wc_list).set_index('Year'); st.table(wc_df)
+        wdata=[]
+        for c in cols3:
+            inv = sv(bs,"Inventory",c)
+            ar  = sv(bs,"Accounts Receivable",c)
+            ap  = sv(bs,"Accounts Payable",c)
+            cogs= sv(fin,"Cost Of Revenue",c)
+            rev = sv(fin,"Total Revenue",c)
+            dio = round(inv/cogs*365,1) if cogs else None
+            dso = round(ar/rev*365,1) if rev else None
+            dpo = round(ap/cogs*365,1) if cogs else None
+            ccc = round((dio or 0)+(dpo or 0)-(dso or 0),1)
+            wdata.append({"Year":pd.to_datetime(c).year,
+                          "DIO":dio,"DSO":dso,"DPO":dpo,"CCC":ccc})
+        wdf = pd.DataFrame(wdata).set_index("Year")
+        st.table(wdf)
 
 # ——— Overlay ———
 st.markdown("---")
