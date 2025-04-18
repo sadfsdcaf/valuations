@@ -158,7 +158,7 @@ if not annual_financials.empty:
       year = dt.year
       # raw balances in millions
       inv = (balance_sheet.at.get("Inventory", {}).get(dt, 0) / 1e6) if "Inventory" in balance_sheet.index else 0
-      ar  = (balance_sheet.at.get("Net Receivables", {}).get(dt, 0) / 1e6) if "Net Receivables" in balance_sheet.index else 0
+      ar  = (balance_sheet.at.get("Accounts Receivable", {}).get(dt, 0) / 1e6) if "Accounts Receivable" in balance_sheet.index else 0
       ap  = (balance_sheet.at.get("Accounts Payable", {}).get(dt, 0) / 1e6) if "Accounts Payable" in balance_sheet.index else 0
       cogs = (annual_financials.at.get("Cost Of Revenue", {}).get(dt, 0) / 1e6) if "Cost Of Revenue" in annual_financials.index else 0
       rev  = (annual_financials.at.get("Total Revenue", {}).get(dt, 0) / 1e6) if "Total Revenue" in annual_financials.index else 0
