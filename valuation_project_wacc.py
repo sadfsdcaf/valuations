@@ -187,8 +187,8 @@ if st.button("Fetch & Plot Historical Inv/Sales Overlay"):
     df_f = get_fred_data(sid, sd.strftime("%Y-%m-%d"), ed.strftime("%Y-%m-%d"))
     if df_f is None:
         st.warning("No FRED data.")
-        return
-    # Display FRED raw data
+    else:
+        # Display FRED raw data
     st.subheader("FRED Industry Inv/Sales Raw Data")
     st.dataframe(df_f.set_index("date"))
 
@@ -227,5 +227,6 @@ if st.button("Fetch & Plot Historical Inv/Sales Overlay"):
     st.pyplot(fig)
 
 st.markdown("Data sourced from Yahoo Finance, FRED & Alpha Vantage.")
+
 
 
