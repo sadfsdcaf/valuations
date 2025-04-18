@@ -4,8 +4,6 @@ import pandas as pd
 import requests
 import matplotlib.pyplot as plt
 from datetime import datetime
-from yfinance.shared import YFRateLimitError
-import time
 
 # ——— Page config (must be first) ———
 st.set_page_config(page_title="Financial + FRED Dashboard", layout="wide")
@@ -26,28 +24,19 @@ API_KEY     = "26c01b09f8083e30a1ee9cb929188a74"
 FRED_URL    = "https://api.stlouisfed.org/fred/series/observations"
 FRED_SERIES = {"MRTSIR444USS": "Industry Inv/Sales Ratio: Building Materials & Garden Equipment Dealers"}
 
-
 def format_millions(x):
     if pd.notnull(x):
         return round(x / 1_000_000, 2)
     return 0
-
 
 def to_millions(x):
     if pd.notnull(x):
         return round(x / 1e6, 2)
     return 0
 
-# Fetch functions
-
+# Fetch function (simple, without retry logic)
 def fetch_stock_data(ticker):
-    """Fetch a yfinance Ticker, retrying if rate limit is hit."""
-    try:
-        return yf.Ticker(ticker)
-    except YFRateLimitError:
-        st.warning("Yahoo Finance rate limit reached. Retrying in 60 seconds...")
-        time.sleep(60)
-        return yf.Ticker(ticker)
+    return yf.Ticker(ticker)
 
 @st.cache_data
 def get_fred_data(series_id, start_date, end_date):
@@ -69,7 +58,6 @@ def get_fred_data(series_id, start_date, end_date):
     return df if not df.empty else None
 
 # GAAP structured view helper
-
 def display_gaap_income_statement(fin, col):
     gaap_order = [
         "Total Revenue","Operating Revenue","Cost Of Revenue","Gross Profit",
@@ -83,7 +71,6 @@ def display_gaap_income_statement(fin, col):
                 st.write(f"**{item}**: {val}M")
 
 # ——— Main financial section ———
-
 ticker = st.text_input("Enter Ticker:", "AAPL")
 if ticker:
     stock = fetch_stock_data(ticker)
@@ -95,7 +82,7 @@ if ticker:
     if not fin.empty:
         latest = fin.columns[0]
 
-        # Safe field retrieval
+        # Safe retrieval
         def safe_get(df, field):
             return df.at[field, latest] if field in df.index else 0
 
@@ -126,10 +113,10 @@ if ticker:
             })
             st.table(summary)
 
-        # GAAP structured view
+        # GAAP view
         display_gaap_income_statement(fin, latest)
 
-        # Balance & Cash Flow
+        # Balance Sheet & Cash Flow
         st.subheader("Balance Sheet")
         st.dataframe(bs.applymap(lambda x: to_millions(x)))
         st.subheader("Cash Flow Statement")
@@ -145,7 +132,7 @@ if ticker:
         st.subheader("Key Financials (M) — Last 3 Years")
         st.table(key_df)
 
-        # Year-over-Year Growth
+        # Year‑over‑Year Growth
         grow = key_df.pct_change(axis=1).iloc[:,1:] * 100
         grow.columns = [f"{y2} vs {y1}" for y1, y2 in zip(years[:-1], years[1:])]
         st.subheader("Year‑over‑Year Growth (%)")
