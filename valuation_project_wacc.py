@@ -120,20 +120,26 @@ if ticker:
         st.write(cashflow)
 
 if not annual_financials.empty:
-    # 1) define the metrics you care about
-    top_metrics = ["Total Revenue", "Gross Profit", "EBIT", "EBITDA"]
-    # 2) grab the three most‐recent columns
-    last3 = annual_financials.columns[:3]
-    # 3) slice & transpose so that rows = years, cols = metrics
-    key_df = (
-        annual_financials
-        .reindex(top_metrics)         # pick only your four metrics
-        .loc[:, last3]                # pick the last 3 years
-        .T                            # transpose → index=year, columns=metrics
-        .rename(index=lambda ts: ts.year)  # make the row labels just the year
-    )
-    # 4) convert to millions & round
-    key_df = key_df.applymap(lambda x: round(x/1e6, 2))
-    # 5) display
-    st.subheader("Key Financials (M) — Last 3 Years")
-    st.table(key_df)
+  # 1) define the metrics you care about
+  top_metrics = ["Total Revenue", "Gross Profit", "EBIT", "EBITDA"]
+  
+  # 2) grab the three most‐recent columns
+  last3 = annual_financials.columns[:3]
+  
+  # 3) slice to only your metrics and those years
+  key_df = (
+      annual_financials
+      .reindex(top_metrics)      # rows = your four metrics
+      .loc[:, last3]             # cols = the last 3 years
+  )
+  
+  # 4) convert to millions & round
+  key_df = key_df.applymap(lambda x: round(x/1e6, 2))
+  
+  # 5) rename the columns to just the calendar year
+  key_df.columns = [c.year for c in key_df.columns]
+  
+  # 6) display
+  st.subheader("Key Financials (M) — Last 3 Years")
+  st.table(key_df)
+
