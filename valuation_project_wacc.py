@@ -90,23 +90,44 @@ if ticker:
         gr = rr / roic if roic else 0
         val_g = nopat / (wacc - gr) if wacc>gr else 0
         val_ng = nopat / wacc if wacc else 0
-
+        
+        # ——— EBIT‐based Free Cash Flow ———
+        ebit       = safe_latest(fin, 'EBIT')
+        ebit_nopat = ebit * (1 - taxrate)          # EBIT·(1–T)
+        fcf_ebit   = ebit_nopat + damo - ppe - wcchg
+        
         # Summary Table
         st.subheader("Summary Table")
         df_sum = pd.DataFrame({
             'Metric': [
                 'NOPAT (M)',
                 'FCF (pretax NOPAT, M)',
-                'FCF (EBIT basis, M)',   # new row
+                'FCF (EBIT basis, M)',
                 'Total Debt (M)',
-                …
+                'Total Equity (M)',
+                'Invested Capital (M)',
+                'WACC',
+                'Beta',
+                'ROIC',
+                'Growth Rate',
+                'Valuation (Growth)',
+                'Valuation (No Growth)',
+                'Market Cap (M)'
             ],
             'Value': [
                 nopat/1e6,
                 fcf/1e6,
-                fcf_ebit/1e6,            # new value
+                fcf_ebit/1e6,
                 td/1e6,
-                …
+                te/1e6,
+                tic/1e6,
+                wacc,
+                beta,
+                roic,
+                gr,
+                val_g/1e6,     # if you want these in millions too
+                val_ng/1e6,
+                info.get('marketCap', 0)/1e6
             ]
         })
         st.table(df_sum)
