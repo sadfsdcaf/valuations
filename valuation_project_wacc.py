@@ -20,6 +20,12 @@ This dashboard:
 """)
 
 # ——— Constants & Helpers ———
+
+# Fetch the current 10-year Treasury yield (as a decimal, e.g. 0.035 for 3.5%)
+def get_10yr_treasury_yield():
+    hist = yf.Ticker("^TNX").history(period="1mo")
+    return hist["Close"].iloc[-1] / 100 if not hist.empty else 0
+
 API_KEY     = "26c01b09f8083e30a1ee9cb929188a74"
 FRED_URL    = "https://api.stlouisfed.org/fred/series/observations"
 FRED_SERIES = {"MRTSIR444USS": "Industry Inv/Sales Ratio: Building Materials & Garden Equipment Dealers"}
@@ -104,9 +110,7 @@ if ticker:
         total_invested_capital = total_debt + total_equity
 
         equity_beta = info.get('beta', 1)
-        treasury_yield = get_fred_data  # placeholder for get_10yr_treasury_yield()
-        # Assuming get_10yr_treasury_yield() exists
-        treasury_yield = get_10yr_treasury_yield()
+                treasury_yield = get_10yr_treasury_yield()
 
         asset_beta = equity_beta * (1 / (1 + (1 - calculated_tax_rate) * (total_debt / total_equity))) if total_equity else 0
 
