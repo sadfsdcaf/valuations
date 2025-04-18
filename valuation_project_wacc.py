@@ -130,11 +130,16 @@ if not annual_financials.empty:
       return round(x/1e6, 2) if x is not None else 0
   
   # 3) build key financials DataFrame
-  key_df = annual_financials.reindex(top_metrics).loc[:, last3]
-  key_df = key_df.applymap(lambda x: to_millions(x))
-  years = [c.year for c in last3]
+  key_df = (
+      annual_financials
+      .reindex(top_metrics)
+      .loc[:, last3]
+      .applymap(lambda x: to_millions(x))
+  )
+  # extract years safely
+  years = [pd.to_datetime(col).year for col in last3]
   key_df.columns = years
-  key_df = key_df[years[::-1]]
+  key_df = key_df[years[::-1]]  # sort oldest→newest swapped
   
   # 4) display key financials
   st.subheader("Key Financials (M) — Last 3 Years")
@@ -147,7 +152,6 @@ if not annual_financials.empty:
   st.table(growth_df)
   
   # 6) helper to safely access DataFrame values
-  
   def safe_val(df, idx, col):
       if idx in df.index and col in df.columns:
           return df.at[idx, col]
@@ -156,13 +160,16 @@ if not annual_financials.empty:
   # 7) Working Capital Raw Inputs & Metrics
   raw_inputs = {}
   wc_metrics = {}
-  for dt in last3:
-      year = dt.year
-      inv = safe_val(balance_sheet, "Inventory", dt)
-      ar  = safe_val(balance_sheet, "Net Receivables", dt)
-      ap  = safe_val(balance_sheet, "Accounts Payable", dt)
-      cogs = safe_val(annual_financials, "Cost Of Revenue", dt)
-      rev  = safe_val(annual_financials, "Total Revenue", dt)
+  for col in last3:
+      # parse column label to timestamp/year
+      ts = pd.to_datetime(col)
+      year = ts.year
+  
+      inv = safe_val(balance_sheet, "Inventory", col)
+      ar  = safe_val(balance_sheet, "Net Receivables", col)
+      ap  = safe_val(balance_sheet, "Accounts Payable", col)
+      cogs = safe_val(annual_financials, "Cost Of Revenue", col)
+      rev  = safe_val(annual_financials, "Total Revenue", col)
   
       # convert raw to millions
       inv_m = to_millions(inv)
@@ -171,7 +178,7 @@ if not annual_financials.empty:
       cogs_m= to_millions(cogs)
       rev_m = to_millions(rev)
   
-      # calculate days
+      # calculate days metrics on raw values
       dio = round((inv / cogs) * 365, 1) if cogs else None
       dso = round((ar  / rev) * 365, 1) if rev  else None
       dpo = round((ap  / cogs) * 365, 1) if cogs else None
@@ -179,13 +186,16 @@ if not annual_financials.empty:
       raw_inputs[year] = [inv_m, ar_m, ap_m, cogs_m, rev_m]
       wc_metrics[year] = [dio, dso, dpo]
   
-  # build DataFrames
-  raw_df = pd.DataFrame(raw_inputs, index=["Inventory (M)", "Net Receivables (M)", "Accounts Payable (M)", "COGS (M)", "Revenue (M)"])
+  # 8) build and display DataFrames
+  raw_df = pd.DataFrame(
+      raw_inputs,
+      index=["Inventory (M)", "Net Receivables (M)", "Accounts Payable (M)", "COGS (M)", "Revenue (M)"]
+  )
   st.subheader("Working Capital Raw Inputs (M) — Last 3 Years")
   st.table(raw_df)
   
-  wc_df = pd.DataFrame(wc_metrics, index=["DIO", "DSO", "DPO"])
+  wc_df = pd.DataFrame(wc_metrics, index=["DIO", "DSO", "DPO"]
+  )
   st.subheader("Working Capital Metrics (Days) — Last 3 Years")
   st.table(wc_df)
-
 
