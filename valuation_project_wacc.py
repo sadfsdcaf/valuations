@@ -54,7 +54,7 @@ def get_fred_data(series_id, start, end):
     return df
 
 # ——— Main Section ———
-ticker = st.text_input("Enter Ticker:", "AAPL")
+ticker = st.text_input("Enter Ticker:", "HD")
 if ticker:
     tk = fetch_ticker(ticker)
     info = tk.info
@@ -123,7 +123,7 @@ if ticker:
 
         # EBIT-based FCF
         ebit       = safe_latest(fin, 'EBIT')
-        ebit_nopat = safe_latest(fin, "ebit") * (1 - taxrate)
+        ebit_nopat = safe_latest(fin, 'EBIT') * (1 - taxrate)
         fcf_ebit   = ebit_nopat + damo - ppe - wcchg
 
         # Summary Table
