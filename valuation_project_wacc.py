@@ -120,26 +120,36 @@ if ticker:
         st.write(cashflow)
 
 if not annual_financials.empty:
-  # 1) define the metrics you care about
+# 1) define the metrics you care about
   top_metrics = ["Total Revenue", "Gross Profit", "EBITDA", "EBIT"]
   
-  # 2) grab the three most‐recent columns
+  # 2) grab the three most‑recent columns
   last3 = annual_financials.columns[:3]
   
   # 3) slice to only your metrics and those years
   key_df = (
       annual_financials
-      .reindex(top_metrics)      # rows = your four metrics
-      .loc[:, last3]             # cols = the last 3 years
+      .reindex(top_metrics)
+      .loc[:, last3]
   )
   
   # 4) convert to millions & round
   key_df = key_df.applymap(lambda x: round(x/1e6, 2))
   
-  # 5) rename the columns to just the calendar year
-  key_df.columns = [c.year for c in key_df.columns]
+  # 5) rename the columns to just the calendar year and sort ascending
+  years = [c.year for c in key_df.columns]
+  key_df.columns = years
+  key_df = key_df[key_df.columns[::-1]]  # sort oldest → newest
   
-  # 6) display
+  # 6) display key financials
   st.subheader("Key Financials (M) — Last 3 Years")
   st.table(key_df)
+  
+  # 7) calculate year‑over‑year growth rates
+  growth_df = key_df.pct_change(axis=1).iloc[:, 1:] * 100
+  # label growth columns as “YYYY vs YYYY”
+  growth_df.columns = [f"{curr} vs {prev}" for prev, curr in zip(years[:-1], years[1:])]
+  
+  st.subheader("Year‑over‑Year Growth (%)")
+  st.table(growth_df)
 
