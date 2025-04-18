@@ -166,7 +166,27 @@ if ticker:
         # round all to integers
         df_sum['Value'] = df_sum['Value'].round().astype(int)
         st.table(df_sum)
-
+       
+        
+        # First, verify your field names
+        st.write("Available PPE fields:", [i for i in fin.index if 'PPE' in i])
+        
+        # Then pull with the exact names:
+        gross_ppe = safe_latest(fin, "Property, Plant & Equipment, Gross")
+        net_ppe   = safe_latest(fin, "Property, Plant & Equipment, Net")
+        
+        # Build & display
+        metrics = {
+            "Gross PPE (M)": gross_ppe/1e6,
+            "Net   PPE (M)": net_ppe/1e6
+        }
+        st.subheader("PPE on the Balance Sheet")
+        df_ppe = pd.DataFrame({
+            "Metric": list(metrics.keys()),
+            "Value": [round(v) for v in metrics.values()]
+        })
+        st.table(df_ppe)
+        
         # Free Cash Flow
         st.subheader("Free Cash Flow")
         metrics = {
@@ -174,7 +194,7 @@ if ticker:
             "NOPAT": nopat,
             "Gross PPE": gross_ppe,
             "Net PPE": net_ppe
-            # "Change in NWC": 
+
         }
         for name, val in metrics.items():
             st.write(f"**{name}**: {val/1e6:.0f}M")
