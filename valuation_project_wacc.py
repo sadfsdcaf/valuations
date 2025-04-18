@@ -189,45 +189,44 @@ if st.button("Fetch & Plot Historical Inv/Sales Overlay"):
         st.warning("No FRED data.")
     else:
         # Display FRED raw data
-      st.subheader("FRED Industry Inv/Sales Raw Data")
-      st.dataframe(df_f.set_index("date"))
+        st.subheader("FRED Industry Inv/Sales Raw Data")
+        st.dataframe(df_f.set_index("date"))
 
-    # 2) Fetch Home Depot annual fundamentals via Alpha Vantage for full history
-    from alpha_vantage.fundamentaldata import FundamentalData
-    ALPHA_KEY = "059VKV2VPORKW7KA"
-    fd_av = FundamentalData(key=ALPHA_KEY, output_format="json")
-    bs_json, _ = fd_av.get_balance_sheet_annual(symbol="HD")
-    is_json, _ = fd_av.get_income_statement_annual(symbol="HD")
-    bs_reports = bs_json.get("annualReports", [])
-    is_reports = is_json.get("annualReports", [])
+        # 2) Fetch Home Depot annual fundamentals via Alpha Vantage for full history
+        from alpha_vantage.fundamentaldata import FundamentalData
+        ALPHA_KEY = "059VKV2VPORKW7KA"
+        fd_av = FundamentalData(key=ALPHA_KEY, output_format="json")
+        bs_json, _ = fd_av.get_balance_sheet_annual(symbol="HD")
+        is_json, _ = fd_av.get_income_statement_annual(symbol="HD")
+        bs_reports = bs_json.get("annualReports", [])
+        is_reports = is_json.get("annualReports", [])
 
-    # Build historical DataFrame
-    hist_data = []
-    for bs_r, is_r in zip(bs_reports, is_reports):
-        date = pd.to_datetime(bs_r.get("fiscalDateEnding"))
-        inv  = float(bs_r.get("inventory", 0))
-        rev  = float(is_r.get("totalRevenue", 0))
-        ratio = (inv / rev * 100) if rev else None
-        hist_data.append({"date": date, "Inv/Sales (%)": ratio})
-    hd_hist_df = pd.DataFrame(hist_data).set_index("date").sort_index()
+        # Build historical DataFrame
+        hist_data = []
+        for bs_r, is_r in zip(bs_reports, is_reports):
+            date = pd.to_datetime(bs_r.get("fiscalDateEnding"))
+            inv  = float(bs_r.get("inventory", 0))
+            rev  = float(is_r.get("totalRevenue", 0))
+            ratio = (inv / rev * 100) if rev else None
+            hist_data.append({"date": date, "Inv/Sales (%)": ratio})
+        hd_hist_df = pd.DataFrame(hist_data).set_index("date").sort_index()
 
-    # Display Home Depot historical ratio
-    st.subheader("Home Depot Annual Inv/Sales Ratio (%) — Historical")
-    st.dataframe(hd_hist_df)
+        # Display Home Depot historical ratio
+        st.subheader("Home Depot Annual Inv/Sales Ratio (%) — Historical")
+        st.dataframe(hd_hist_df)
 
-    # 3) Plot overlay
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(df_f["date"], df_f["value"], label="Industry Inv/Sales (FRED)")
-    ax.plot(hd_hist_df.index, hd_hist_df['Inv/Sales (%)'], marker='o', linestyle='-', label="Home Depot Inv/Sales (Annual)")
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Inv/Sales Ratio (%)")
-    ax.set_title("Industry vs. Home Depot Inventory/Sales Ratio (2000–Present)")
-    ax.legend()
-    ax.grid(True)
-    st.pyplot(fig)
+        # 3) Plot overlay
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(df_f["date"], df_f["value"], label="Industry Inv/Sales (FRED)")
+        ax.plot(hd_hist_df.index, hd_hist_df['Inv/Sales (%)'], marker='o', linestyle='-', label="Home Depot Inv/Sales (Annual)")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Inv/Sales Ratio (%)")
+        ax.set_title("Industry vs. Home Depot Inventory/Sales Ratio (2000–Present)")
+        ax.legend()
+        ax.grid(True)
+        st.pyplot(fig)
 
 st.markdown("Data sourced from Yahoo Finance, FRED & Alpha Vantage.")
-
 
 
 
