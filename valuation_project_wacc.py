@@ -8,6 +8,16 @@ st.markdown("""
 This tool displays the last published annual financial statements using yFinance's `financials`, `balance_sheet`, and `cashflow` attributes and includes a Free Cash Flow (FCF) section with NOPAT and working capital.
 """)
 
+st.set_page_config(page_title="Financial + FRED Dashboard", layout="wide")
+
+# ——— Constants & Helpers ———
+API_KEY       = "26c01b09f8083e30a1ee9cb929188a74"
+FRED_URL      = "https://api.stlouisfed.org/fred/series/observations"
+FRED_SERIES   = {
+    "MRTSIR444USS": "Inventory/Sales Ratio: Building Materials & Garden Equipment Dealers"
+}
+
+
 def fetch_stock_data(ticker):
     return yf.Ticker(ticker)
 
@@ -205,5 +215,30 @@ if not annual_financials.empty:
   ccc_df = pd.DataFrame(ccc, index=["CCC (Days)"])
   st.subheader("Cash Conversion Cycle (Days) — Last 3 Years")
   st.table(ccc_df)
+st.markdown("---")
+st.subheader("FRED: Inventory/Sales Ratio")
 
+col1, col2 = st.columns(2)
+with col1:
+    start = st.date_input("Start Date", pd.to_datetime("2000-01-01"))
+with col2:
+    end   = st.date_input("End Date",   pd.to_datetime("2025-12-31"))
+# ——— FRED Section ———
+if st.button("Fetch FRED Data"):
+    sid, desc = next(iter(FRED_SERIES.items()))
+    df_f = fetch_fred(sid, start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
+    if df_f is not None:
+        st.subheader(f"{desc} ({sid})")
+        st.dataframe(df_f.set_index("date"))
+        fig, ax = plt.subplots(figsize=(10,4))
+        ax.plot(df_f["date"], df_f["value"], marker="o", linestyle="-")
+        ax.set_title(desc)
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Ratio")
+        ax.grid(True)
+        st.pyplot(fig)
+    else:
+        st.warning("No data for that range.")
+
+st.markdown("Data sourced from Yahoo Finance & FRED.")
 
