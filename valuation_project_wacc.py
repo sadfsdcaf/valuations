@@ -99,8 +99,8 @@ if ticker:
         # Debt & Equity
         ltd = safe_latest(bs, 'Long Term Debt')
         std = safe_latest(bs, 'Short Term Debt')
-        td  = ltd + std
-        te  = safe_latest(bs, 'Total Stockholder Equity')
+        td  = safe_latest(bs, 'Total Debt')
+        te  = safe_latest(bs, 'Total Equity Gross Minority Interest')
         tic = td + te
 
         # WACC inputs
