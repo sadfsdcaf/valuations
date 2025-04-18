@@ -77,8 +77,9 @@ if ticker:
         ppe = abs(safe_latest(cf, 'Net PPE Purchase And Sale'))
         wcchg = safe_latest(cf, 'Change In Working Capital')
         fcf = nopat + damo - ppe - wcchg
-        ltd = safe_latest(bs, 'Long Term Debt'); cd = safe_latest(bs, 'Current Debt')
-        td = ltd + cd; te = safe_latest(bs, 'Total Equity Gross Minority Interest')
+        ltd = safe_latest(bs, 'Long Term Debt')
+        std = safe_latest(bs, 'Short Term Debt')
+        td = ltd + std; te = safe_latest(bs, 'Total Stockholder Equity')
         tic = td + te
         beta = info.get('beta',1)
         ry = get_10yr_treasury_yield()
