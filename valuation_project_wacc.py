@@ -198,5 +198,12 @@ if not annual_financials.empty:
   wc_df = pd.DataFrame(wc_metrics, index=["DIO", "DSO", "DPO"])
   st.subheader("Working Capital Metrics (Days) — Last 3 Years")
   st.table(wc_df)
+  
+    # 10) calculate and display Cash Conversion Cycle (CCC)
+  ccc = {year: round(vals[0] + vals[2] - (vals[1] or 0), 1) 
+         for year, vals in wc_metrics.items()}
+  ccc_df = pd.DataFrame(ccc, index=["CCC (Days)"])
+  st.subheader("Cash Conversion Cycle (Days) — Last 3 Years")
+  st.table(ccc_df)
 
 
