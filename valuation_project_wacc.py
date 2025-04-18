@@ -175,11 +175,11 @@ if ticker:
 # ——— FRED + Home Depot Overlay ———
 st.markdown("---")
 st.subheader("Inventory/Sales Ratio: Industry vs. Home Depot")
-col1,col2 = st.columns(2)
+col1, col2 = st.columns(2)
 with col1:
-    sd=st.date_input("FRED Start Date", pd.to_datetime("2000-01-01"))
+    sd = st.date_input("FRED Start Date", pd.to_datetime("2000-01-01"))
 with col2:
-    ed=st.date_input("FRED End Date", pd.to_datetime("2025-12-31"))
+    ed = st.date_input("FRED End Date",   pd.to_datetime("2025-12-31"))
 
 if st.button("Fetch & Plot Inv/Sales Overlay"):
     sid, desc = next(iter(FRED_SERIES.items()))
@@ -187,42 +187,43 @@ if st.button("Fetch & Plot Inv/Sales Overlay"):
     if df_f is None:
         st.warning("No FRED data.")
     else:
-        # Home Depot data
+        # Fetch Home Depot annual data
         hd = fetch_stock_data("HD")
         fin_hd = hd.financials
         bs_hd  = hd.balance_sheet
-                periods = [c for c in fin_hd.columns if c in bs_hd.columns]
-        years_hd = [pd.to_datetime(c).year for c in periods]
 
-        # Collect Home Depot Inventory values
-        invs = []
+        # Determine periods common to both statements
+        periods = [c for c in fin_hd.columns if c in bs_hd.columns]
+
+        # Extract Inventory and Revenue values
+        invs, revs = [], []
         for c in periods:
             try:
                 invs.append(bs_hd.at["Inventory", c])
             except:
                 invs.append(0)
-
-        # Collect Home Depot Revenue values
-        revs = []
-        for c in periods:
             try:
                 revs.append(fin_hd.at["Total Revenue", c])
             except:
                 revs.append(0)
 
-        # Calculate Home Depot Inv/Sales ratio (%)
-        hd_ratio = [round(inv/rev, 4)*100 if rev else None for inv, rev in zip(invs, revs)]
+        # Calculate Inv/Sales ratio (%)
+        dates = [pd.to_datetime(c) for c in periods]
+        ratios = [round((inv/rev) * 100, 2) if rev else None for inv, rev in zip(invs, revs)]
 
-        fig, ax = plt.subplots(figsize=(10,5))
- [round(inv/rev, 4)*100 if rev else None for inv, rev in zip(invs, revs)]
+        # Display raw tables for debug
+        hd_df = pd.DataFrame({"Inventory": invs, "Revenue": revs}, index=dates)
+        st.subheader("Home Depot Raw Inventory & Revenue")
+        st.dataframe(hd_df)
 
-        fig, ax = plt.subplots(figsize=(10,5))
-        [round(inv/rev,4)*100 if rev else None for inv,rev in zip(invs,revs)]
+        ratio_df = pd.DataFrame({"Inv/Sales (%)": ratios}, index=dates)
+        st.subheader("Home Depot Inv/Sales Ratio (%)")
+        st.dataframe(ratio_df)
 
+        # Plot overlay
         fig, ax = plt.subplots(figsize=(10,5))
         ax.plot(df_f["date"], df_f["value"], label="Industry Inv/Sales")
-        ax.plot([datetime(y,1,1) for y in years_hd], hd_ratio,
-                marker='o', linestyle='-', label="Home Depot Inv/Sales")
+        ax.plot(ratio_df.index, ratio_df["Inv/Sales (%)"], marker="o", linestyle="-", label="Home Depot Inv/Sales")
         ax.set_xlabel("Date")
         ax.set_ylabel("Inv/Sales Ratio (%)")
         ax.set_title("Industry vs. Home Depot Inventory/Sales Ratio")
@@ -230,4 +231,3 @@ if st.button("Fetch & Plot Inv/Sales Overlay"):
         ax.grid(True)
         st.pyplot(fig)
 
-st.markdown("Data sourced from Yahoo Finance & FRED.")
