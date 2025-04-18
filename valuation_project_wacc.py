@@ -41,6 +41,10 @@ def fetch_stock_data(ticker):
     except YFRateLimitError:
         st.warning("Yahoo Finance rate limit reached. Retrying in 60 seconds...")
         time.sleep(60)
+        return yf.Ticker(ticker)
+    except YFRateLimitError:
+        st.warning("Yahoo Finance rate limit reached. Retrying in 60 seconds...")
+        time.sleep(60)
         return yf.Ticker(ticker)(ticker):
     return yf.Ticker(ticker)
 
