@@ -89,8 +89,8 @@ if ticker:
         total_revenue = safe_latest(fin, 'Total Revenue')
         pretax         = safe_latest(fin, 'Pretax Income')
         taxprov        = safe_latest(fin, 'Tax Provision')
-        net_ppe        = safe_latest(fin, 'Property, Plant & Equipment, Net')
-        gross_ppe      = safe_latest(fin, 'Property, Plant & Equipment, Gross')
+        net_ppe        = safe_latest(fin, 'Net PPE')
+        gross_ppe      = safe_latest(fin, 'Gross PPE')
         taxrate        = (taxprov / pretax) if pretax else 0
         ebit           = safe_latest(fin, 'EBIT')
         nopat          = safe_latest(fin, 'EBIT') * (1 - taxrate)
