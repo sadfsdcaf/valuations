@@ -69,33 +69,70 @@ if ticker:
     else:
         st.warning("No historical price data available.")
 
-    # Annual fundamentals
-    fin = tk.financials
-    bs  = tk.balance_sheet
-    cf  = tk.cashflow
+        # Annual fundamentals
+    annual_financials = tk.financials
+    balance_sheet = tk.balance_sheet
+    cashflow = tk.cashflow
 
-    if fin.empty:
-        st.warning("No annual financials found for this ticker.")
+    if not annual_financials.empty:
+        latest_column = annual_financials.columns[0]
+
+        # helper
+        def safe_get(df, field):
+            return format_millions(df.loc[field, latest_column]) if field in df.index else 0
+
+        total_revenue = safe_get(annual_financials, 'Total Revenue')
+        cost_of_revenue = safe_get(annual_financials, 'Cost Of Revenue')
+        pretax_income = safe_get(annual_financials, 'Pretax Income')
+        tax_provision_reported = safe_get(annual_financials, 'Tax Provision')
+        depreciation = safe_get(annual_financials, 'Reconciled Depreciation')
+
+        calculated_tax_rate = (tax_provision_reported / pretax_income) if pretax_income else 0
+        nopat = pretax_income * (1 - calculated_tax_rate)
+
+        depreciation_amortization_depletion = safe_get(cashflow, 'Depreciation Amortization Depletion')
+        net_ppe_purchase_and_sale = abs(safe_get(cashflow, 'Net PPE Purchase And Sale'))
+        change_in_working_capital = safe_get(cashflow, 'Change In Working Capital')
+
+        fcf = nopat + depreciation_amortization_depletion - net_ppe_purchase_and_sale - change_in_working_capital
+
+        long_term_debt = safe_get(balance_sheet, 'Long Term Debt')
+        current_debt = safe_get(balance_sheet, 'Current Debt')
+        total_debt = long_term_debt + current_debt
+
+        total_equity = safe_get(balance_sheet, 'Total Equity Gross Minority Interest')
+        total_invested_capital = total_debt + total_equity
+
+        equity_beta = info.get('beta', 1)
+        treasury_yield = get_fred_data  # placeholder for get_10yr_treasury_yield()
+        # Assuming get_10yr_treasury_yield() exists
+        treasury_yield = get_10yr_treasury_yield()
+
+        asset_beta = equity_beta * (1 / (1 + (1 - calculated_tax_rate) * (total_debt / total_equity))) if total_equity else 0
+
+        expected_return_equity = treasury_yield + equity_beta * 0.05
+        expected_return_debt = treasury_yield + 0.01
+
+        d_ic_ratio = (total_debt / total_invested_capital) if total_invested_capital else 0
+        e_ic_ratio = (total_equity / total_invested_capital) if total_invested_capital else 0
+
+        wacc = ((e_ic_ratio * expected_return_equity) + (d_ic_ratio * expected_return_debt * (1 - calculated_tax_rate)))
+
+        reinvestment_rate = ((net_ppe_purchase_and_sale - depreciation_amortization_depletion) + change_in_working_capital) / nopat if nopat else 0
+        roic = nopat / total_invested_capital if total_invested_capital else 0
+        growth_rate = reinvestment_rate / roic if roic else 0
+
+        valuation_growth = nopat / (wacc - growth_rate) if wacc > growth_rate else 0
+        valuation_no_growth = nopat / wacc if wacc else 0
+
+        st.subheader("Summary Table")
+        summary_table = pd.DataFrame({
+            'Metric': ['NOPAT (M)', 'FCF (M)', 'Total Debt (M)', 'Total Equity (M)', 'WACC', 'ROIC', 'Growth Rate', 'Valuation (Growth)', 'Valuation (No Growth)', 'Market Cap (M)'],
+            'Value': [nopat, fcf, total_debt, total_equity, wacc, roic, growth_rate, valuation_growth, valuation_no_growth, format_millions(info.get('marketCap', 0))]
+        })
+        st.table(summary_table)
     else:
-        latest = fin.columns[0]
-        def sv(df, field, col):
-            return df.at[field, col] if field in df.index else 0
-
-        # Core metrics
-        pretax  = sv(fin, 'Pretax Income', latest)
-        taxprov = sv(fin, 'Tax Provision', latest)
-        taxrate = (taxprov/pretax) if pretax else 0
-        nopat   = (pretax * (1-taxrate))/1e6
-        damo    = sv(cf, 'Depreciation Amortization Depletion', latest)
-        ppe     = abs(sv(cf, 'Net PPE Purchase And Sale', latest))
-        wcchg   = sv(cf, 'Change In Working Capital', latest)
-        fcf     = (nopat + damo - ppe - wcchg)/1e6
-        ltd     = sv(bs, 'Long Term Debt', latest)
-        currd   = sv(bs, 'Current Debt', latest)
-        totald  = (ltd+currd)/1e6
-        teq     = sv(bs, 'Total Equity Gross Minority Interest', latest)/1e6
-
-        # Summary
+        st.warning("No annual financials found for this ticker.")
         st.subheader("Summary")
         df_sum = pd.DataFrame({
             'Metric':['NOPAT (M)','FCF (M)','Total Debt (M)','Total Equity (M)','Market Cap (M)'],
