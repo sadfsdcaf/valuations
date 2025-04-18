@@ -2,7 +2,7 @@ import yfinance as yf
 import streamlit as st
 import pandas as pd
 import requests
-import matplotlib.pyplot as plt
+
 
 st.title("Last Published Annual Financial Statements with NOPAT, FCF, and Invested Capital Breakdown")
 
@@ -217,30 +217,25 @@ if not annual_financials.empty:
   ccc_df = pd.DataFrame(ccc, index=["CCC (Days)"])
   st.subheader("Cash Conversion Cycle (Days) — Last 3 Years")
   st.table(ccc_df)
+
+# ——— FRED Section ———
+
 st.markdown("---")
 st.subheader("FRED: Inventory/Sales Ratio")
-
 col1, col2 = st.columns(2)
 with col1:
     start = st.date_input("Start Date", pd.to_datetime("2000-01-01"))
 with col2:
     end   = st.date_input("End Date",   pd.to_datetime("2025-12-31"))
-# ——— FRED Section ———
+
 if st.button("Fetch FRED Data"):
     sid, desc = next(iter(FRED_SERIES.items()))
-    df_f = fetch_fred(sid, start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
+    df_f = get_fred_data(sid, start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
     if df_f is not None:
         st.subheader(f"{desc} ({sid})")
         st.dataframe(df_f.set_index("date"))
-        fig, ax = plt.subplots(figsize=(10,4))
-        ax.plot(df_f["date"], df_f["value"], marker="o", linestyle="-")
-        ax.set_title(desc)
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Ratio")
-        ax.grid(True)
-        st.pyplot(fig)
+        st.line_chart(df_f.set_index("date")["value"])
     else:
         st.warning("No data for that range.")
 
 st.markdown("Data sourced from Yahoo Finance & FRED.")
-
