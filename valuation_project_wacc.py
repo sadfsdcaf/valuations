@@ -105,8 +105,14 @@ if ticker:
 
         # WACC inputs
         beta  = info.get('beta', 1)
+        MRP =.05
+
         ry    = get_10yr_treasury_yield()
-        er_eq = ry + beta * 0.05
+        c_bond = ry + .03 
+        spread = ry - c_bond
+        re = ry + MRP * beta
+        rd = ry + spread
+        er_eq = ry + beta * MRP
         er_de = ry + 0.01
         di    = td / tic if tic else 0
         ei    = te / tic if tic else 0
