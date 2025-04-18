@@ -1,6 +1,8 @@
 import yfinance as yf
 import streamlit as st
 import pandas as pd
+import requests
+import matplotlib.pyplot as plt
 
 st.title("Last Published Annual Financial Statements with NOPAT, FCF, and Invested Capital Breakdown")
 
