@@ -170,7 +170,7 @@ if ticker:
         st.subheader("Free Cash Flow")
         metrics = {
             "EBIT": safe_latest(fin, "EBIT"),
-            "NOPAT": nopat
+            "NOPAT": nopat,
             "Net PPE": net_ppe
             # "Change in NWC": 
         }
