@@ -89,6 +89,7 @@ if ticker:
         total_revenue = safe_latest(fin, 'Total Revenue')
         pretax         = safe_latest(fin, 'Pretax Income')
         taxprov        = safe_latest(fin, 'Tax Provision')
+        net_ppe        = safe_latest(fin, 'Net PPE')
         taxrate        = (taxprov / pretax) if pretax else 0
         ebit           = safe_latest(fin, 'EBIT')
         nopat          = safe_latest(fin, 'EBIT') * (1 - taxrate)
@@ -165,11 +166,13 @@ if ticker:
         df_sum['Value'] = df_sum['Value'].round().astype(int)
         st.table(df_sum)
 
-        # GAAP Income Statement
+        # Free Cash Flow
         st.subheader("Free Cash Flow")
         metrics = {
             "EBIT": safe_latest(fin, "EBIT"),
-            "NOPAT": ebit_nopat
+            "NOPAT": nopat
+            "Net PPE": net_ppe
+            "Change in NWC": 
         }
         for name, val in metrics.items():
             st.write(f"**{name}**: {val/1e6:.0f}M")
@@ -198,21 +201,41 @@ if ticker:
         st.table(gdf)
 
         # Working Capital & CCC
-        st.subheader("Working Capital Metrics (Days)")
+        st.subheader("Working Capital Metrics (Days) + ΔNWC")
         wc_list = []
         for c in last5:
-            inv  = safe_col(bs, 'Inventory', c)
-            ar   = safe_col(bs, 'Accounts Receivable', c)
-            ap   = safe_col(bs, 'Accounts Payable', c)
-            cogs = safe_col(fin, 'Cost Of Revenue', c)
-            rev  = safe_col(fin, 'Total Revenue', c)
-            dio  = int(round(inv/cogs*365)) if cogs else None
-            dso  = int(round(ar/rev*365)) if rev else None
-            dpo  = int(round(ap/cogs*365)) if cogs else None
+            inv  = safe_col(bs, 'Inventory', c) or 0
+            ar   = safe_col(bs, 'Accounts Receivable', c) or 0
+            ap   = safe_col(bs, 'Accounts Payable', c) or 0
+            cogs = safe_col(fin, 'Cost Of Revenue', c) or 0
+            rev  = safe_col(fin, 'Total Revenue', c) or 0
+        
+            # days metrics
+            dio  = int(round(inv  / cogs * 365)) if cogs else None
+            dso  = int(round(ar   / rev  * 365)) if rev  else None
+            dpo  = int(round(ap   / cogs * 365)) if cogs else None
             ccc  = int(round((dio or 0) + (dpo or 0) - (dso or 0)))
-            wc_list.append({'Year': pd.to_datetime(c).year, 'DIO': dio, 'DSO': dso, 'DPO': dpo, 'CCC': ccc})
+        
+            # NWC and its year‑over‑year change placeholder
+            nwc = inv + ar - ap
+        
+            wc_list.append({
+                'Year': pd.to_datetime(c).year,
+                'DIO': dio,
+                'DSO': dso,
+                'DPO': dpo,
+                'CCC': ccc,
+                'NWC': nwc/1e6  # in millions
+            })
+        
         wc_df = pd.DataFrame(wc_list).set_index('Year')
+        
+        # compute ΔNWC (absolute change in millions)
+        wc_df['ΔNWC'] = wc_df['NWC'].diff().round(2)
+        
+        # display as table
         st.table(wc_df)
+
 
 # ——— Overlay ———
 st.markdown("---")
