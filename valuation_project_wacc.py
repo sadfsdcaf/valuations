@@ -120,7 +120,7 @@ if ticker:
         st.write(cashflow)
 
 if not annual_financials.empty:
-# 1) define the metrics you care about
+  # 1) define the metrics you care about
   top_metrics = ["Total Revenue", "Gross Profit", "EBITDA", "EBIT"]
   
   # 2) grab the three most‑recent columns
@@ -151,21 +151,30 @@ if not annual_financials.empty:
   st.subheader("Year‑over‑Year Growth (%)")
   st.table(growth_df)
   
-  # 8) Working Capital Metrics (Days) for last 3 years
-  metrics_data = {}
+  # 8) Working Capital Inputs & Metrics for last 3 years
+  raw_data = {}
+  wc_data = {}
   for dt in last3:
       year = dt.year
-      inv = (balance_sheet.at["Inventory", dt] / 1e6) if "Inventory" in balance_sheet.index else 0
-      ar  = (balance_sheet.at["Net Receivables", dt] / 1e6) if "Net Receivables" in balance_sheet.index else 0
-      ap  = (balance_sheet.at["Accounts Payable", dt] / 1e6) if "Accounts Payable" in balance_sheet.index else 0
-      cogs = (annual_financials.at["Cost Of Revenue", dt] / 1e6) if "Cost Of Revenue" in annual_financials.index else 0
-      rev  = (annual_financials.at["Total Revenue", dt] / 1e6) if "Total Revenue" in annual_financials.index else 0
+      # raw balances in millions
+      inv = (balance_sheet.at.get("Inventory", {}).get(dt, 0) / 1e6) if "Inventory" in balance_sheet.index else 0
+      ar  = (balance_sheet.at.get("Net Receivables", {}).get(dt, 0) / 1e6) if "Net Receivables" in balance_sheet.index else 0
+      ap  = (balance_sheet.at.get("Accounts Payable", {}).get(dt, 0) / 1e6) if "Accounts Payable" in balance_sheet.index else 0
+      cogs = (annual_financials.at.get("Cost Of Revenue", {}).get(dt, 0) / 1e6) if "Cost Of Revenue" in annual_financials.index else 0
+      rev  = (annual_financials.at.get("Total Revenue", {}).get(dt, 0) / 1e6) if "Total Revenue" in annual_financials.index else 0
+      # metrics
       dio = (inv / cogs) * 365 if cogs else 0
-      dso = (ar  / rev)  * 365 if rev  else 0
-      dpo = (ap  / cogs) * 365 if cogs else 0
-      metrics_data[year] = [round(dio, 1), round(dso, 1), round(dpo, 1)]
-  
-  wc_df = pd.DataFrame(metrics_data, index=["DIO", "DSO", "DPO"])
+      dso = (ar / rev) * 365 if rev else 0
+      dpo = (ap / cogs) * 365 if cogs else 0
+      raw_data[year] = [round(inv, 2), round(ar, 2), round(ap, 2), round(cogs, 2), round(rev, 2)]
+      wc_data[year] = [round(dio, 1), round(dso, 1), round(dpo, 1)]
+  # show raw inputs
+  raw_df = pd.DataFrame(raw_data, index=["Inventory (M)", "Net Receivables (M)", "Accounts Payable (M)", "COGS (M)", "Revenue (M)"])
+  st.subheader("Working Capital Raw Inputs (M) — Last 3 Years")
+  st.table(raw_df)
+  # show working capital metrics
+  wc_df = pd.DataFrame(wc_data, index=["DIO", "DSO", "DPO"])
   st.subheader("Working Capital Metrics (Days) — Last 3 Years")
   st.table(wc_df)
+
 
