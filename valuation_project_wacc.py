@@ -100,8 +100,8 @@ if ticker:
         ltd = safe_latest(bs, 'Long Term Debt')
         std = safe_latest(bs, 'Short Term Debt')
         td  = ltd + std
-        te  = safe_latest(bs, 'Total Stockholder Equity')
-        tic = td + te
+        te  = safe_latest(bs, 'Total Equity Gross Minority Interest')
+        tic = safe_latest(bs, 'Invested Capital')
 
         # WACC inputs
         beta  = info.get('beta', 1)
@@ -113,9 +113,9 @@ if ticker:
         wacc  = (ei * er_eq) + (di * er_de * (1 - taxrate))
 
         # ROIC & growth
-        rr   = ((ppe - damo) + wcchg) / nopat if nopat else 0
+        b   = ((ppe - damo) + wcchg) / nopat if nopat else 0
         roic = nopat / tic if tic else 0
-        gr   = rr / roic if roic else 0
+        gr   = b / roic if roic else 0
 
         # Valuations
         val_g  = nopat / (wacc - gr) if wacc > gr else 0
@@ -139,7 +139,8 @@ if ticker:
                 'WACC',
                 'Beta',
                 'ROIC',
-                'Growth Rate',
+                'Reinvestment'
+                'Growth',
                 'Valuation (Growth)',
                 'Valuation (No Growth)',
                 'Market Cap (M)'
@@ -154,6 +155,7 @@ if ticker:
                 wacc,
                 beta,
                 roic,
+                b,
                 gr,
                 val_g/1e6,
                 val_ng/1e6,
