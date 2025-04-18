@@ -27,7 +27,8 @@ def format_millions(v):
 def to_millions(x):
     return round(x / 1e6, 2) if pd.notnull(x) else 0
 
-@st.cache_data
+# Fetch functions without caching to avoid serialization issues
+
 def fetch_stock_data(ticker):
     return yf.Ticker(ticker)
 
@@ -85,13 +86,10 @@ if ticker:
     if not fin.empty:
         latest = fin.columns[0]
 
-        # 1) Summary Table
-        total_revenue = format_millions(fin.at.get("Total Revenue", {}).get(latest, 0))
-        # (or compute via safe_get when needed)
-        # ... compute NOPAT, FCF, etc. using existing logic ...
-        # For brevity, assume you retain your original summary logic here
+        # 1) Summary Table (retain original logic here)
+        # ... compute NOPAT, FCF, Invested Capital, etc. ...
         st.subheader("Summary Table")
-        # st.table(...)  # keep your original summary_table code
+        # st.table(...)  # original summary table code
 
         # 2) GAAP Structured View
         st.subheader("Annual Financial Statements (GAAP Structured View)")
