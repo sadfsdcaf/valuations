@@ -156,7 +156,7 @@ if st.button("Plot Inv/Sales Overlay"):
         dates=[pd.to_datetime(c) for c in periods]
         invs=[sv(bs_hd,"Inventory",c) for c in periods]
         revs=[sv(fin_hd,"Total Revenue",c) for c in periods]
-        ratios=[round(i/r*100,2) if r else None for i,r in zip(invs,revs)]
+        ratios=[round(i/r*100/12,2) if r else None for i,r in zip(invs,revs)]
         hd_df=pd.DataFrame({"InvSales%":ratios},index=dates)
         st.dataframe(hd_df)
         fig,ax=plt.subplots(figsize=(10,5))
