@@ -177,7 +177,7 @@ if ticker:
             ebit = safe_col(fin, 'EBIT', period)
             tax_rate = safe_latest(fin, 'Tax Rate For Calcs')
             nopat = ebit * (1 - taxrate)
-            capex = safe_col(cf, 'Capital Expenditures', period)  # Corrected here
+            capex = safe_col(cf, 'Capital Expenditure', period)  # Corrected here
             damo = safe_col(fin, 'Reconciled Depreciation', period)
             
             wcchg = safe_col(cf, 'Change In Working Capital', period)
