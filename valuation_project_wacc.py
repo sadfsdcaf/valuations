@@ -94,6 +94,7 @@ if ticker:
         capex = safe_latest(cf, 'Capital Expenditure')
         taxrate = (taxprov / pretax) if pretax else 0
         ebit = safe_latest(fin, 'EBIT')
+        ebitda = safe_latest(fin, 'EBITDA')
         nopat = ebit * (1 - taxrate)
         damo = safe_latest(cf, 'Depreciation Amortization Depletion')
         ppe = abs(safe_latest(cf, 'Net PPE'))
@@ -133,9 +134,10 @@ if ticker:
         st.subheader("Summary Table")
         df_sum = pd.DataFrame({
             'Metric': [
+                'EBITDA'
+                'EBIT'
                 'NOPAT (M)',
-                'FCF (pretax NOPAT, M)',
-                'FCF (EBIT basis, M)',
+
                 'Total Debt (M)',
                 'Total Equity (M)',
                 'Invested Capital (M)',
@@ -148,9 +150,10 @@ if ticker:
                 'Market Cap (M)'
             ],
             'Value': [
+                ebitda/1e6,
+                ebit/1e6,
                 nopat/1e6,
-                fcf/1e6,
-                fcf_ebit/1e6,
+
                 td/1e6,
                 te/1e6,
                 tic/1e6,
