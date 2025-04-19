@@ -1,6 +1,7 @@
 import yfinance as yf
 import streamlit as st
 import pandas as pd
+import numpy as np
 import requests
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -20,7 +21,6 @@ This dashboard:
 
 # ——— Helpers ———
 def format_millions(x):
-    # divide by 1e6 and convert to whole number
     return int(round(x/1e6)) if pd.notnull(x) else 0
 
 def get_10yr_treasury_yield():
@@ -62,7 +62,6 @@ if ticker:
     # Live Price
     live = info.get('currentPrice') or info.get('regularMarketPrice')
     if live:
-        # show as whole number
         st.metric("Live Price", f"${live:.0f}")
 
     # Historical Price
@@ -81,53 +80,53 @@ if ticker:
         st.warning("No annual financials found.")
     else:
         latest = fin.columns[0]
+
         # Safe getters
         def safe_latest(df, field): return df.at[field, latest] if field in df.index else 0
         def safe_col(df, field, col): return df.at[field, col] if field in df.index else 0
 
         # Compute metrics
         total_revenue = safe_latest(fin, 'Total Revenue')
-        pretax         = safe_latest(fin, 'Pretax Income')
-        taxprov        = safe_latest(fin, 'Tax Provision')
-        net_ppe        = safe_latest(fin, 'Net PPE')
-        gross_ppe      = safe_latest(fin, 'Gross PPE')
-        taxrate        = (taxprov / pretax) if pretax else 0
-        ebit           = safe_latest(fin, 'EBIT')
-        nopat          = safe_latest(fin, 'EBIT') * (1 - taxrate)
-        damo           = safe_latest(cf, 'Depreciation Amortization Depletion')
-        ppe            = abs(safe_latest(cf, 'Net PPE Purchase And Sale'))
-        wcchg          = safe_latest(cf, 'Change In Working Capital')
-        fcf            = nopat + damo - ppe - wcchg
+        pretax = safe_latest(fin, 'Pretax Income')
+        taxprov = safe_latest(fin, 'Tax Provision')
+        net_ppe = safe_latest(fin, 'Net PPE')
+        gross_ppe = safe_latest(fin, 'Gross PPE')
+        taxrate = (taxprov / pretax) if pretax else 0
+        ebit = safe_latest(fin, 'EBIT')
+        nopat = ebit * (1 - taxrate)
+        damo = safe_latest(cf, 'Depreciation Amortization Depletion')
+        ppe = abs(safe_latest(cf, 'Net PPE Purchase And Sale'))
+        wcchg = safe_latest(cf, 'Change In Working Capital')
+        fcf = nopat + damo - ppe - wcchg
 
         # Debt & Equity
         ltd = safe_latest(bs, 'Long Term Debt')
         std = safe_latest(bs, 'Short Term Debt')
-        td  = ltd + std
-        te  = safe_latest(bs, 'Total Equity Gross Minority Interest')
+        td = ltd + std
+        te = safe_latest(bs, 'Total Equity Gross Minority Interest')
         tic = td + te
 
         # WACC inputs
-        beta  = info.get('beta', 1)
-        ry    = get_10yr_treasury_yield()
+        beta = info.get('beta', 1)
+        ry = get_10yr_treasury_yield()
         er_eq = ry + beta * 0.05
         er_de = ry + 0.01
-        di    = td / tic if tic else 0
-        ei    = te / tic if tic else 0
-        wacc  = (ei * er_eq) + (di * er_de * (1 - taxrate))
+        di = td / tic if tic else 0
+        ei = te / tic if tic else 0
+        wacc = (ei * er_eq) + (di * er_de * (1 - taxrate))
 
         # ROIC & growth
-        rr   = ((ppe - damo) + wcchg) / nopat if nopat else 0
+        rr = ((ppe - damo) + wcchg) / nopat if nopat else 0
         roic = nopat / tic if tic else 0
-        gr   = rr / roic if roic else 0
+        gr = rr / roic if roic else 0
 
         # Valuations
-        val_g  = nopat / (wacc - gr) if wacc > gr else 0
+        val_g = nopat / (wacc - gr) if wacc > gr else 0
         val_ng = nopat / wacc if wacc else 0
 
         # EBIT-based FCF
-
-        ebit_nopat = safe_latest(fin, 'EBIT') * (1 - taxrate)
-        fcf_ebit   = ebit_nopat + damo - ppe - wcchg
+        ebit_nopat = ebit * (1 - taxrate)
+        fcf_ebit = ebit_nopat + damo - ppe - wcchg
 
         # Summary Table
         st.subheader("Summary Table")
@@ -163,69 +162,57 @@ if ticker:
                 info.get('marketCap', 0)/1e6
             ]
         })
-        # round all to integers
-        df_sum['Value'] = df_sum['Value'].round().astype(int)
+        # replace inf, fillna, round and convert
+        df_sum['Value'] = df_sum['Value'].replace([np.inf, -np.inf], np.nan).fillna(0).round().astype(int)
         st.table(df_sum)
-       
-        
-        # First, verify your field names
+
+        # PPE Fields
         st.write("Available PPE fields:", [i for i in fin.index if 'PPE' in i])
-        
-        # Then pull with the exact names:
+
+        # Gross & Net PPE
         gross_ppe = safe_latest(fin, "Property, Plant & Equipment, Gross")
-        net_ppe   = safe_latest(fin, "Property, Plant & Equipment, Net")
-        
-        # Build & display
+        net_ppe = safe_latest(fin, "Property, Plant & Equipment, Net")
+
+        st.subheader("PPE on the Balance Sheet")
         metrics = {
             "Gross PPE (M)": gross_ppe/1e6,
-            "Net   PPE (M)": net_ppe/1e6
+            "Net PPE (M)": net_ppe/1e6
         }
-        st.subheader("PPE on the Balance Sheet")
         df_ppe = pd.DataFrame({
             "Metric": list(metrics.keys()),
             "Value": [round(v) for v in metrics.values()]
         })
         st.table(df_ppe)
-        
-    # Free Cash Flow
-    st.subheader("Free Cash Flow")
 
-    # build a list of per-period metrics
-    fcf_rows = []
-    for period in fin.columns:
-        # EBIT and tax calculations
-        ebit    = safe_col(fin, 'EBIT', period)
-        pretax  = safe_col(fin, 'Pretax Income', period)
-        taxprov = safe_col(fin, 'Tax Provision', period)
-        taxrate = (taxprov / pretax) if pretax else 0
-        nopat   = ebit * (1 - taxrate)
+        # Free Cash Flow by year
+        st.subheader("Free Cash Flow by Year")
+        fcf_rows = []
+        for period in fin.columns:
+            ebit = safe_col(fin, 'EBIT', period)
+            pretax = safe_col(fin, 'Pretax Income', period)
+            taxprov = safe_col(fin, 'Tax Provision', period)
+            taxrate = (taxprov / pretax) if pretax else 0
+            nopat = ebit * (1 - taxrate)
 
-        # Cash flow components
-        damo    = safe_col(cf, 'Depreciation Amortization Depletion', period)
-        capex   = abs(safe_col(cf, 'Net PPE Purchase And Sale', period))
-        wcchg   = safe_col(cf, 'Change In Working Capital', period)
+            damo = safe_col(cf, 'Depreciation Amortization Depletion', period)
+            capex = abs(safe_col(cf, 'Net PPE Purchase And Sale', period))
+            wcchg = safe_col(cf, 'Change In Working Capital', period)
 
-        # Free Cash Flow calculation
-        fcf     = nopat + damo - capex - wcchg
+            fcf = nopat + damo - capex - wcchg
 
-        # Append to rows
-        fcf_rows.append({
-            'Year': pd.to_datetime(period).year,
-            'EBIT (M)':         ebit/1e6,
-            'NOPAT (M)':        nopat/1e6,
-            'Depreciation (M)': damo/1e6,
-            'Capex (M)':        capex/1e6,
-            'ΔNWC (M)':         wcchg/1e6,
-            'Free Cash Flow (M)': fcf/1e6
-        })
+            fcf_rows.append({
+                'Year': pd.to_datetime(period).year,
+                'EBIT (M)': ebit/1e6,
+                'NOPAT (M)': nopat/1e6,
+                'Depreciation (M)': damo/1e6,
+                'Capex (M)': capex/1e6,
+                'ΔNWC (M)': wcchg/1e6,
+                'Free Cash Flow (M)': fcf/1e6
+            })
 
-    # Display results or warning
-    if fcf_rows:
-        df_fcf = pd.DataFrame(fcf_rows).set_index('Year').round(0).astype(int)
+        df_fcf = pd.DataFrame(fcf_rows).set_index('Year')
+        df_fcf = df_fcf.replace([np.inf, -np.inf], np.nan).fillna(0).round().astype(int)
         st.table(df_fcf)
-    else:
-        st.warning("No periods available to calculate Free Cash Flow.")
-
 
         # Financial Statement (M)
         st.subheader("Income Statement (M) — Last Published")
