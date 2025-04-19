@@ -301,19 +301,18 @@ if ticker:
 
 # --- Price per Share Forecast Section ---
         
-        st.subheader("💵 Forecasted Price Per Share")
-        
-        # 1. Shares Outstanding
-        shares_outstanding = st.number_input(
-            "Enter Shares Outstanding (in millions)",
-            value=info.get('sharesOutstanding', 0) / 1e6 if info.get('sharesOutstanding') else 100
-        )
+st.subheader("💵 Forecasted Price Per Share")
+
+        # 1. Pull Shares Outstanding automatically
+        shares_outstanding = info.get('sharesOutstanding', 0) / 1e6  # millions
         
         if shares_outstanding <= 0:
-            st.error("Shares Outstanding must be greater than 0 to calculate Price per Share.")
+            st.error("Shares Outstanding data not available from Yahoo Finance.")
         else:
-            # 2. Calculate price per share based on forecasted VALUE
-            price_per_share = np.array(value_series) / shares_outstanding  # <---- forecasted value ÷ shares
+            st.success(f"Shares Outstanding: {shares_outstanding:.2f}M")
+        
+            # 2. Calculate Price per Share
+            price_per_share = np.array(value_series) / shares_outstanding  # <--- Forecasted Value ÷ Shares Outstanding
         
             # 3. Create a DataFrame
             pps_df = pd.DataFrame({
@@ -321,12 +320,13 @@ if ticker:
                 'Forecasted Price per Share ($)': price_per_share
             }).set_index('Year')
         
-            # 4. Display
+            # 4. Display Table
+            st.subheader(f"Forecasted Price per Share ({len(forecast_years)} Years)")
             st.table(pps_df.style.format({"Forecasted Price per Share ($)": "{:.2f}"}))
         
-            # 5. Chart
+            # 5. Plot Chart
             st.subheader("📈 Forecasted Price per Share Chart")
-    st.line_chart(pps_df)
+            st.line_chart(pps_df)
 
 # --- Financial Statements Section ---
 if not fin.empty:
