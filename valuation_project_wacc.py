@@ -132,12 +132,13 @@ if ticker:
 
         # Summary Table
         st.subheader("Summary Table")
+        
         df_sum = pd.DataFrame({
             'Metric': [
-                'EBITDA'
-                'EBIT'
+                'EBITDA',
+                'EBIT',
                 'NOPAT (M)',
-
+                
                 'Total Debt (M)',
                 'Total Equity (M)',
                 'Invested Capital (M)',
@@ -153,7 +154,7 @@ if ticker:
                 ebitda/1e6,
                 ebit/1e6,
                 nopat/1e6,
-
+        
                 td/1e6,
                 te/1e6,
                 tic/1e6,
