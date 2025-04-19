@@ -104,19 +104,34 @@ if ticker:
         # Debt & Equity
         ltd = safe_latest(bs, 'Long Term Debt')
         std = safe_latest(bs, 'Short Term Debt')
-        td = ltd + std
+        td = safe_latest(bs, 'Total Debt')
         te = safe_latest(bs, 'Total Equity Gross Minority Interest')
-        tic = td + te
+        tic = safe_latest(bs, 'Invested Capital')
 
         # WACC inputs
+        # ——— Assumptions ———
+        market_risk_premium = 0.05  # 5%
+        credit_spread = 0.01        # 1% over risk-free rate
+        
+        # ——— Inputs ———
         beta = info.get('beta', 1)
-        ry = get_10yr_treasury_yield()
-        er_eq = ry + beta * 0.05
-        er_de = ry + 0.01
-        di = td / tic if tic else 0
-        ei = te / tic if tic else 0
+        ry = get_10yr_treasury_yield()  # 10Y Treasury Yield (Risk-Free Rate)
+        
+        # ——— Cost of Capital ———
+        er_eq = ry + beta * market_risk_premium    # Expected return on equity
+        er_de = ry + credit_spread                 # Expected return on debt
+        
+        # ——— Capital Structure ———
+        di = td / tic if tic else 0  # Debt / Invested Capital
+        ei = te / tic if tic else 0  # Equity / Invested Capital
+        
+        # ——— Weighted Average Cost of Capital (WACC) ———
         wacc = (ei * er_eq) + (di * er_de * (1 - taxrate))
 
+        st.metric("WACC", f"{wacc:.2%}")
+        st.metric("Cost of Equity", f"{er_eq:.2%}")
+        st.metric("Cost of Debt (after-tax)", f"{er_de*(1-taxrate):.2%}")
+        
         # ROIC & growth
         rr = ((ppe - damo) + wcchg) / nopat if nopat else 0
         roic = nopat / tic if tic else 0
@@ -138,7 +153,7 @@ if ticker:
                 'EBITDA',
                 'EBIT',
                 'NOPAT (M)',
-                
+                'Capital Expenditure',
                 'Total Debt (M)',
                 'Total Equity (M)',
                 'Invested Capital (M)',
@@ -154,7 +169,7 @@ if ticker:
                 ebitda/1e6,
                 ebit/1e6,
                 nopat/1e6,
-        
+                
                 td/1e6,
                 te/1e6,
                 tic/1e6,
