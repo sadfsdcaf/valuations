@@ -220,7 +220,7 @@ if ticker:
                 f"{market_value_equity:.2f}",
                 f"{market_value_debt:.2f}",
                 f"{er_de:.4f}",
-                f"{tax_rate:.2f}",
+                f"{taxrate:.2f}",
                 f"{ebt:.2f}",
                 f"{effective_tax_rate:.4f}",
                 f"{di:.4f}",
