@@ -249,37 +249,3 @@ if ticker:
         }
         st.table(pd.DataFrame(valuation_data))
 
-# --- Inventory/Sales Overlay Section ---
-st.markdown("---")
-st.subheader("Inventory/Sales Overlay")
-col1, col2 = st.columns(2)
-with col1:
-    sd = st.date_input("FRED Start", pd.to_datetime("2000-01-01"))
-with col2:
-    ed = st.date_input("FRED End", pd.to_datetime("2025-12-31"))
-
-if st.button("Plot Inv/Sales Overlay"):
-    sid, _ = next(iter(FRED_SERIES.items()))
-    df_f = get_fred_data(sid, sd.strftime('%Y-%m-%d'), ed.strftime('%Y-%m-%d'))
-    if df_f is None:
-        st.warning('No FRED data.')
-    else:
-        tk_hd = fetch_ticker('HD')
-        f_hd, b_hd = tk_hd.financials, tk_hd.balance_sheet
-        per = [c for c in f_hd.columns if c in b_hd.columns]
-        dates = [pd.to_datetime(c) for c in per]
-        invs = [safe_col(b_hd, 'Inventory', c) for c in per]
-        revs = [safe_col(f_hd, 'Total Revenue', c) for c in per]
-        ratios = [round(i/r*100/12,2) if r else None for i,r in zip(invs,revs)]
-        hd_df = pd.DataFrame({'InvSales%': ratios}, index=dates)
-
-        fig, ax = plt.subplots(figsize=(10,5))
-        ax.plot(df_f['date'], df_f['value'], label='Industry')
-        ax.plot(hd_df.index, hd_df['InvSales%'], marker='o', label='Home Depot')
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Inv/Sales %")
-        ax.legend()
-        ax.grid(True)
-        st.pyplot(fig)
-
-st.markdown("Data from Yahoo Finance & FRED.")
