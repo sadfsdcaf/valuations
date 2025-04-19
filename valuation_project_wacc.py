@@ -98,7 +98,7 @@ if ticker:
         damo = safe_latest(cf, 'Depreciation Amortization Depletion')
         ppe = abs(safe_latest(cf, 'Net PPE'))
         wcchg = safe_latest(cf, 'Change In Working Capital')
-        fcf = nopat + damo - ppe - wcchg
+        fcf = nopat + damo - capex - wcchg
 
         # Debt & Equity
         ltd = safe_latest(bs, 'Long Term Debt')
