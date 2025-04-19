@@ -232,9 +232,19 @@ if ticker:
             ap   = safe_col(bs, 'Accounts Payable', c) or 0
             cogs = safe_col(fin, 'Cost Of Revenue', c) or 0
             rev  = safe_col(fin, 'Total Revenue', c) or 0
-        
+            
+            st.write("inv:", inv, type(inv), "cogs:", cogs, type(cogs))
             # days metrics
-            dio  = int(round(inv  / cogs * 365)) if cogs else None
+        def safe_col(df, field, col):
+            if field in df.index and col in df.columns:
+                val = df.at[field, col]
+                try:
+                    return float(val)
+                except (TypeError, ValueError):
+                    return 0.0
+            return 0.0    
+            
+            dio = int(round((inv / cogs) * 365)) if cogs > 0 else None
             dso  = int(round(ar   / rev  * 365)) if rev  else None
             dpo  = int(round(ap   / cogs * 365)) if cogs else None
             ccc  = int(round((dio or 0) + (dpo or 0) - (dso or 0)))
