@@ -189,9 +189,9 @@ if ticker:
         
         # Free Cash Flow
         st.subheader("Free Cash Flow")
- # build a list of per‐period metrics
+         # build a list of per‐period metrics
         fcf_rows = []
-        for period in fin.columns:
+    for period in fin.columns:
             # grab each piece from the financials / cash‐flow
             ebit    = safe_col(fin, 'EBIT', period)
             pretax  = safe_col(fin, 'Pretax Income', period)
