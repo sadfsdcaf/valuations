@@ -193,7 +193,28 @@ if ticker:
         st.text(f"                    = {td:.2f} / {te:.2f}")
         st.text(f"                    = {td / te:.4f}" if te else "                    = N/A")
 
+        st.subheader("--- WACC Detailed Breakdown ---")
+        st.text(f"Risk-Free Rate: {ry:.4f}")
+        st.text(f"Beta: {beta:.2f}")
+        st.text(f"Market Risk Premium: {market_risk_premium:.4f}")
+        st.text(f"Cost of Equity: {er_eq:.4f}")
         
+        market_value_equity = info.get('marketCap', 0) / 1e6  # Market Cap in millions
+        market_value_debt = td / 1e9  # Debt in billions
+        
+        income_tax_expense = safe_latest(fin, 'Income Tax Expense') / 1e6
+        ebt = pretax / 1e6
+        effective_tax_rate = income_tax_expense / ebt if ebt else 0
+        
+        st.text(f"Market Value of Equity ($M): {market_value_equity:.2f}")
+        st.text(f"Market Value of Debt ($Bn): {market_value_debt:.2f}")
+        st.text(f"Cost of Debt: {er_de:.4f}")
+        st.text(f"Income Tax Expense ($M): {income_tax_expense:.2f}")
+        st.text(f"Earnings Before Tax (EBT) ($M): {ebt:.2f}")
+        st.text(f"Effective Tax Rate: {taxrate:.4f}")
+        st.text(f"Weight of Debt (Wd): {di:.4f}")
+        st.text(f"Weight of Equity (We): {ei:.4f}")
+        st.text(f"WACC: {wacc:.4f}")
 
 
 # --- Overlay ---
