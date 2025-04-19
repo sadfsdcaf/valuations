@@ -192,8 +192,10 @@ if ticker:
         metrics = {
             "EBIT": safe_latest(fin, "EBIT"),
             "NOPAT": nopat,
-            "Gross PPE": gross_ppe,
-            "Net PPE": net_ppe
+            "Depreciation": demo,
+            "Capex": net_ppe,
+            "Change in NWC": wcchg
+            "Free Cash Flow": ffc 
 
         }
         for name, val in metrics.items():
