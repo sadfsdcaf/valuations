@@ -299,6 +299,35 @@ if ticker:
         st.subheader(f"📊 Forecast Diagnostics (Including Period 0)")
         st.dataframe(forecast_diag.style.format("{:.2f}"))
 
+# --- Price per Share Forecast Section ---
+
+        st.subheader("💵 Forecasted Price Per Share")
+        
+        # 1. Get or input Shares Outstanding
+        shares_outstanding = st.number_input(
+            "Enter Shares Outstanding (in millions)",
+            value=info.get('sharesOutstanding', 0) / 1e6 if info.get('sharesOutstanding') else 100  # fallback to 100M if not found
+        )
+        
+        if shares_outstanding <= 0:
+            st.error("Shares Outstanding must be greater than 0 to calculate Price per Share.")
+        else:
+            # 2. Calculate Price per Share
+            price_per_share = np.array(value_series) / shares_outstanding
+        
+            # 3. Build the table
+            pps_df = pd.DataFrame({
+                'Year': forecast_years,
+                'Forecasted Price per Share ($)': price_per_share
+            }).set_index('Year')
+        
+            # 4. Show table
+            st.table(pps_df.style.format({"Forecasted Price per Share ($)": "{:.2f}"}))
+        
+            # 5. Plot
+            st.subheader("📈 Forecasted Price Per Share Chart")
+            st.line_chart(pps_df)
+
 # --- Financial Statements Section ---
 if not fin.empty:
     ...
