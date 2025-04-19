@@ -249,6 +249,47 @@ if ticker:
         }
         st.table(pd.DataFrame(valuation_data))
 
+        # --- Forecasting Section ---
+        st.markdown("---")
+        st.subheader("📈 Forecasting NOPAT (Flexible Inputs)")
+        
+        # Inputs
+        g_forecast = st.number_input("Enter Growth Rate (g) for Forecasting (%)", value=5.0) / 100
+        b_forecast = st.number_input("Enter Reinvestment Rate (b)", value=0.2)
+        years_forecast = st.selectbox("Select Number of Years to Forecast:", options=[5, 7, 10, 20], index=1)
+        
+        # Forecast calculation
+        years = list(range(1, years_forecast + 1))
+        forecast_nopat = []
+        
+        for n in years:
+            if (wacc - g_forecast) > 0:
+                forecast_value = (nopat * (1 - b_forecast)) / (wacc - g_forecast) ** n
+            else:
+                forecast_value = 0
+            forecast_nopat.append(forecast_value / 1e6)  # in millions
+        
+        forecast_df = pd.DataFrame({
+            "Year": [datetime.now().year + n for n in years],
+            "Forecasted Value (M)": forecast_nopat
+        })
+        
+        # Display Table
+        st.subheader(f"Forecasted NOPAT Values ({years_forecast} Years)")
+        st.table(forecast_df)
+        
+        # Display Chart
+        st.subheader("Forecast Visualization 📈")
+        st.line_chart(forecast_df.set_index("Year"))
+
+
+
+
+
+
+
+
+
 # --- Financial Statements Section ---
 if not fin.empty:
     ...
