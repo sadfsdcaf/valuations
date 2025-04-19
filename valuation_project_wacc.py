@@ -91,6 +91,7 @@ if ticker:
         taxprov = safe_latest(fin, 'Tax Provision')
         net_ppe = safe_latest(fin, 'Net PPE')
         gross_ppe = safe_latest(fin, 'Gross PPE')
+        capex = safe_latest(cf, 'Capital Expenditure')
         taxrate = (taxprov / pretax) if pretax else 0
         ebit = safe_latest(fin, 'EBIT')
         nopat = ebit * (1 - taxrate)
@@ -195,10 +196,10 @@ if ticker:
             nopat = ebit * (1 - taxrate)
 
             damo = safe_col(cf, 'Depreciation Amortization Depletion', period)
-            capex = abs(safe_col(cf, 'Net PPE Purchase And Sale', period))
+            
             wcchg = safe_col(cf, 'Change In Working Capital', period)
 
-            fcf = nopat + damo - capex - wcchg
+            fcf = nopat + damo - ppe - wcchg
 
             fcf_rows.append({
                 'Year': pd.to_datetime(period).year,
