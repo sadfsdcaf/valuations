@@ -144,25 +144,7 @@ if ticker:
         val_g = nopat / (wacc - gr) if wacc > gr else 0
         val_ng = nopat / wacc if wacc else 0
 
-        df_sum = pd.DataFrame({
-            'Metric': [
-                'EBITDA', 'EBIT', 'NOPAT (M)', 'Capital Expenditure',
-                'Total Debt (M)', 'Total Equity (M)', 'Invested Capital (M)',
-                'WACC', 'Beta', 'ROIC', 'Growth Rate',
-                'Valuation (Growth)', 'Valuation (No Growth)', 'Market Cap (M)'
-            ],
-            'Value': [
-                ebitda/1e6, ebit/1e6, nopat/1e6, capex/1e6,
-                td/1e6, te/1e6, tic/1e6,
-                wacc*100, beta, roic*100, gr*100,
-                val_g/1e6, val_ng/1e6, info.get('marketCap', 0)/1e6
-            ]
-        })
-
-        st.subheader("--- Financial Summary ---")
-        st.dataframe(df_sum)
-
-        roic_growth_data = {
+ roic_growth_data = {
             "Metric": [
                 "Return on Invested Capital (ROIC)",
                 "Change in Invested Capital (Net PPE + NWC)",
@@ -179,72 +161,94 @@ if ticker:
         st.subheader("--- ROIC and Growth Analysis ---")
         st.table(pd.DataFrame(roic_growth_data))
 
-
+        cost_of_capital_data = {
+            "Metric": [
+                "Cost of Equity (rₑ)",
+                "Cost of Debt (r_d)"
+            ],
+            "Value": [
+                f"{er_eq:.4f}",
+                f"{er_de:.4f}"
+            ]
+        }
         st.subheader("--- Cost of Equity and Cost of Debt Calculation ---")
-        st.text(f"Cost of Equity (rₑ) = Risk-Free Rate + Beta × Market Risk Premium")
-        st.text(f"                  = {ry:.4f} + {beta:.2f} × {market_risk_premium:.4f}")
-        st.text(f"                  = {er_eq:.4f}")
-        
-        st.text("")
-        st.text(f"Cost of Debt (r_d) = Risk-Free Rate + Credit Spread")
-        st.text(f"                 = {ry:.4f} + {credit_spread:.4f}")
-        st.text(f"                 = {er_de:.4f}")
-        
-        st.subheader("--- Capital Structure Calculations ---")
-        st.text(f"Debt to Invested Capital (D/IC) = Total Debt / Invested Capital")
-        st.text(f"                               = {td:.2f} / {tic:.2f}")
-        st.text(f"                               = {td / tic:.4f}" if tic else "                               = N/A")
-        
-        st.text("")
-        st.text(f"Equity to Invested Capital (E/IC) = Total Equity / Invested Capital")
-        st.text(f"                                 = {te:.2f} / {tic:.2f}")
-        st.text(f"                                 = {te / tic:.4f}" if tic else "                                 = N/A")
-        
-        st.text("")
-        st.text(f"Debt to Equity (D/E) = Total Debt / Total Equity")
-        st.text(f"                    = {td:.2f} / {te:.2f}")
-        st.text(f"                    = {td / te:.4f}" if te else "                    = N/A")
+        st.table(pd.DataFrame(cost_of_capital_data))
 
-        st.subheader("--- WACC Detailed Breakdown ---")
-        st.text(f"Risk-Free Rate: {ry:.4f}")
-        st.text(f"Beta: {beta:.2f}")
-        st.text(f"Market Risk Premium: {market_risk_premium:.4f}")
-        st.text(f"Cost of Equity: {er_eq:.4f}")
-        
-        market_value_equity = info.get('marketCap', 0) / 1e6  # Market Cap in millions
-        market_value_debt = td / 1e9  # Debt in billions
-        
+        capital_structure_data = {
+            "Metric": [
+                "Debt to Invested Capital (D/IC)",
+                "Equity to Invested Capital (E/IC)",
+                "Debt to Equity (D/E)"
+            ],
+            "Value": [
+                f"{td/tic:.4f}" if tic else "N/A",
+                f"{te/tic:.4f}" if tic else "N/A",
+                f"{td/te:.4f}" if te else "N/A"
+            ]
+        }
+        st.subheader("--- Capital Structure Calculations ---")
+        st.table(pd.DataFrame(capital_structure_data))
+
+        market_value_equity = info.get('marketCap', 0) / 1e6
+        market_value_debt = td / 1e9
         income_tax_expense = safe_latest(fin, 'Income Tax Expense') / 1e6
         ebt = pretax / 1e6
         effective_tax_rate = income_tax_expense / ebt if ebt else 0
-        
-        st.text(f"Market Value of Equity ($M): {market_value_equity:.2f}")
-        st.text(f"Market Value of Debt ($Bn): {market_value_debt:.2f}")
-        st.text(f"Cost of Debt: {er_de:.4f}")
-        st.text(f"Income Tax Expense ($M): {income_tax_expense:.2f}")
-        st.text(f"Earnings Before Tax (EBT) ($M): {ebt:.2f}")
-        st.text(f"Effective Tax Rate: {effective_tax_rate:.4f}")
-        st.text(f"Weight of Debt (Wd): {di:.4f}")
-        st.text(f"Weight of Equity (We): {ei:.4f}")
-        st.text(f"WACC: {wacc:.4f}")
-        
+
+        wacc_data = {
+            "Metric": [
+                "Risk-Free Rate",
+                "Beta",
+                "Market Risk Premium",
+                "Cost of Equity",
+                "Market Value of Equity ($M)",
+                "Market Value of Debt ($Bn)",
+                "Cost of Debt",
+                "Income Tax Expense ($M)",
+                "Earnings Before Tax (EBT) ($M)",
+                "Effective Tax Rate",
+                "Weight of Debt (Wd)",
+                "Weight of Equity (We)",
+                "WACC"
+            ],
+            "Value": [
+                f"{ry:.4f}",
+                f"{beta:.2f}",
+                f"{market_risk_premium:.4f}",
+                f"{er_eq:.4f}",
+                f"{market_value_equity:.2f}",
+                f"{market_value_debt:.2f}",
+                f"{er_de:.4f}",
+                f"{income_tax_expense:.2f}",
+                f"{ebt:.2f}",
+                f"{effective_tax_rate:.4f}",
+                f"{di:.4f}",
+                f"{ei:.4f}",
+                f"{wacc:.4f}"
+            ]
+        }
+        st.subheader("--- WACC Detailed Breakdown ---")
+        st.table(pd.DataFrame(wacc_data))
+
+        valuation_data = {
+            "Metric": [
+                "NOPAT",
+                "WACC",
+                "Growth Rate",
+                "Valuation with Growth",
+                "Valuation with No Growth"
+            ],
+            "Value": [
+                f"${nopat/1e6:.2f}M",
+                f"{wacc:.4f}",
+                f"{gr:.4f}",
+                f"${val_g/1e6:.2f}M" if wacc > gr else "N/A",
+                f"${val_ng/1e6:.2f}M"
+            ]
+        }
         st.subheader("--- Valuation Using Perpetuity Methods ---")
-        st.text(f"NOPAT: {nopat/1e6:.2f}M")
-        st.text(f"WACC: {wacc:.4f}")
-        st.text(f"Growth Rate: {gr:.4f}")
-        
-        if wacc > gr:
-            st.text(f"Valuation with Growth = NOPAT / (WACC - Growth Rate)")
-            st.text(f"                     = {nopat/1e6:.2f}M / ({wacc:.4f} - {gr:.4f})")
-            st.text(f"                     = {val_g/1e6:.2f}M")
-        else:
-            st.warning("WACC is less than or equal to Growth Rate — cannot calculate Valuation with Growth.")
-        
-        st.text("")
-        
-        st.text(f"Valuation with No Growth = NOPAT / WACC")
-        st.text(f"                      = {nopat/1e6:.2f}M / {wacc:.4f}")
-        st.text(f"                      = {val_ng/1e6:.2f}M")
+        st.table(pd.DataFrame(valuation_data))
+
 # --- Overlay ---
 st.markdown("---")
 st.subheader("Inventory/Sales Overlay")
