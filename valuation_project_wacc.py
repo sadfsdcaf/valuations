@@ -291,7 +291,7 @@ for n in years:
 
     # Calculate price per share
     if shares_outstanding > 0:
-        price_per_share = forecast_value / shares_outstanding
+        price_per_share =  shares_outstanding / forecast_value 
     else:
         price_per_share = 0
     price_per_share_series.append(price_per_share)
