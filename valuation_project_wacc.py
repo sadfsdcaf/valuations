@@ -192,11 +192,10 @@ if ticker:
         metrics = {
             "EBIT": safe_latest(fin, "EBIT"),
             "NOPAT": nopat,
-            "Depreciation": demo,
-            "Capex": net_ppe,
+            "Depreciation": damo,
+            "Capex": ppe,
             "Change in NWC": wcchg,
-            "Free Cash Flow": ffc 
-
+            "Free Cash Flow": fcf
         }
         for name, val in metrics.items():
             st.write(f"**{name}**: {val/1e6:.0f}M")
