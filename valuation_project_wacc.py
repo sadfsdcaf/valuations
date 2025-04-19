@@ -162,13 +162,22 @@ if ticker:
         st.subheader("--- Financial Summary ---")
         st.dataframe(df_sum)
 
+        roic_growth_data = {
+            "Metric": [
+                "Return on Invested Capital (ROIC)",
+                "Change in Invested Capital (Net PPE + NWC)",
+                "Retention Ratio (RR)",
+                "Growth Rate (g)"
+            ],
+            "Value": [
+                f"{roic*100:.2f}%",
+                f"${change_in_invested_capital/1e6:.2f}M",
+                f"{rr*100:.2f}%",
+                f"{gr*100:.2f}%"
+            ]
+        }
         st.subheader("--- ROIC and Growth Analysis ---")
-        st.markdown(f"""
-        **Return on Invested Capital (ROIC):** {roic*100:.2f}%  
-        **Change in Invested Capital (Net PPE + NWC):** ${change_in_invested_capital/1e6:.2f}M  
-        **Retention Ratio (RR):** {rr*100:.2f}%  
-        **Growth Rate (g):** {gr*100:.2f}%
-        """, unsafe_allow_html=True)
+        st.table(pd.DataFrame(roic_growth_data))
 
 
         st.subheader("--- Cost of Equity and Cost of Debt Calculation ---")
