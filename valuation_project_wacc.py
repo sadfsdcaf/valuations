@@ -162,11 +162,14 @@ if ticker:
         st.subheader("--- Financial Summary ---")
         st.dataframe(df_sum)
 
-        st.subheader("--- ROIC and Growth ---")
-        st.write(f"ROIC: {roic*100:.2f}%")
-        st.write(f"Change in Invested Capital: ${change_in_invested_capital/1e6:.2f}M")
-        st.write(f"Retention Ratio (RR): {rr*100:.2f}%")
-        st.write(f"Growth Rate (g): {gr*100:.2f}%")
+        st.subheader("--- ROIC and Growth Analysis ---")
+        st.markdown(f"""
+        **Return on Invested Capital (ROIC):** {roic*100:.2f}%  
+        **Change in Invested Capital (Net PPE + NWC):** ${change_in_invested_capital/1e6:.2f}M  
+        **Retention Ratio (RR):** {rr*100:.2f}%  
+        **Growth Rate (g):** {gr*100:.2f}%
+        """, unsafe_allow_html=True)
+
 
         st.subheader("--- Cost of Equity and Cost of Debt Calculation ---")
         st.text(f"Cost of Equity (rₑ) = Risk-Free Rate + Beta × Market Risk Premium")
