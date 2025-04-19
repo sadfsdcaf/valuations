@@ -104,7 +104,7 @@ if ticker:
         net_ppe = safe_latest(fin, 'Net PPE')
         gross_ppe = safe_latest(fin, 'Gross PPE')
         capex = safe_latest(cf, 'Capital Expenditure')
-        taxrate = (taxprov / pretax) if pretax else 0
+        taxrate = safe_latest(cf, 'Tax Rate For Calcs')
         ebit = safe_latest(fin, 'EBIT')
         ebitda = safe_latest(fin, 'EBITDA')
         damo = safe_latest(cf, 'Depreciation Amortization Depletion')
@@ -123,8 +123,8 @@ if ticker:
         tic = safe_latest(bs, 'Invested Capital')
 
         beta = info.get('beta', 1)
-        market_risk_premium = 0.05
-        credit_spread = 0.01
+        market_risk_premium = 0.0443
+        credit_spread = 0.26
 
         er_eq = ry + beta * market_risk_premium
         er_de = ry + credit_spread
@@ -220,7 +220,7 @@ if ticker:
                 f"{market_value_equity:.2f}",
                 f"{market_value_debt:.2f}",
                 f"{er_de:.4f}",
-                f"{income_tax_expense:.2f}",
+                f"{tax_rate:.2f}",
                 f"{ebt:.2f}",
                 f"{effective_tax_rate:.4f}",
                 f"{di:.4f}",
