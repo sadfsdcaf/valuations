@@ -194,7 +194,7 @@ if ticker:
             "NOPAT": nopat,
             "Depreciation": demo,
             "Capex": net_ppe,
-            "Change in NWC": wcchg
+            "Change in NWC": wcchg,
             "Free Cash Flow": ffc 
 
         }
