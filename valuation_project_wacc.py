@@ -250,38 +250,57 @@ if ticker:
         st.table(pd.DataFrame(valuation_data))
         # --- Forecasting Section ---
         st.markdown("---")
-        st.subheader("📈 Forecasting NOPAT with Compounding Growth (7 Years)")
+        st.subheader("📈 Forecasting NOPAT with Compounding Growth (Diagnostics View)")
         
         # Inputs
         g_forecast = st.number_input("Enter Growth Rate (g) for Forecasting (%)", value=5.0) / 100
         b_forecast = st.number_input("Enter Reinvestment Rate (b)", value=0.2)
         years_forecast = st.selectbox("Select Number of Years to Forecast:", options=[5, 7, 10, 20], index=1)
         
-        # Forecast calculation (compounding)
+        # Forecasting setup
         years = list(range(1, years_forecast + 1))
-        forecast_nopat = []
-        current_nopat = nopat  # Start with the latest real NOPAT
+        forecast_years = [datetime.now().year + n for n in years]
+        
+        # Initialize trackers
+        nopat_series = []
+        reinvestment_series = []
+        wacc_series = []
+        growth_series = []
+        value_series = []
+        
+        current_nopat = nopat  # start at latest NOPAT
         
         for n in years:
-            current_nopat = current_nopat * (1 + g_forecast)  # grow each year
+            # Each year's NOPAT
+            current_nopat = current_nopat * (1 + g_forecast)
+            nopat_series.append(current_nopat / 1e6)  # in millions
+            
+            # Same reinvestment, wacc, growth every year
+            reinvestment_series.append(b_forecast)
+            wacc_series.append(wacc)
+            growth_series.append(g_forecast)
+            
+            # Valuation for the year
             if (wacc - g_forecast) > 0:
                 forecast_value = (current_nopat * (1 - b_forecast)) / (wacc - g_forecast)
             else:
                 forecast_value = 0
-            forecast_nopat.append(forecast_value / 1e6)  # in millions
+            value_series.append(forecast_value / 1e6)  # in millions
         
-        forecast_df = pd.DataFrame({
-            "Year": [datetime.now().year + n for n in years],
-            "Forecasted Value (M)": forecast_nopat
-        })
+        # Build the DataFrame
+        forecast_diag = pd.DataFrame({
+            'NOPAT (M)': nopat_series,
+            'Reinvestment Rate (b)': reinvestment_series,
+            'WACC': wacc_series,
+            'Growth Rate (g)': growth_series,
+            'Forecasted Value (M)': value_series
+        }).T
         
-        # Display Table
-        st.subheader(f"Forecasted NOPAT Values ({years_forecast} Years)")
-        st.table(forecast_df)
+        forecast_diag.columns = forecast_years
         
-        # Display Chart
-        st.subheader("Forecast Visualization 📈")
-        st.line_chart(forecast_df.set_index("Year"))
+        # Show diagnostics table
+        st.subheader(f"📊 Forecast Diagnostics ({years_forecast} Years)")
+        st.dataframe(forecast_diag.style.format("{:.2f}"))
 
 
 
