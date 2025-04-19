@@ -104,7 +104,7 @@ if ticker:
         net_ppe = safe_latest(fin, 'Net PPE')
         gross_ppe = safe_latest(fin, 'Gross PPE')
         capex = safe_latest(cf, 'Capital Expenditure')
-        taxrate = safe_latest(cf, 'Tax Rate For Calcs')
+        taxrate = safe_latest(fin, 'Tax Rate For Calcs')
         ebit = safe_latest(fin, 'EBIT')
         ebitda = safe_latest(fin, 'EBITDA')
         damo = safe_latest(cf, 'Depreciation Amortization Depletion')
