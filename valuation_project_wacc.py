@@ -324,9 +324,34 @@ if ticker:
             st.subheader(f"Forecasted Price per Share ({len(forecast_years)} Years)")
             st.table(pps_df.style.format({"Forecasted Price per Share ($)": "{:.2f}"}))
         
-            # 5. Plot Chart
-            st.subheader("📈 Forecasted Price per Share Chart")
-            st.line_chart(pps_df)
+        # --- Price per Share Chart Section (Better Formatting) ---
+        
+        st.subheader("📈 Forecasted Price per Share Chart (Better Scale)")
+        
+        fig, ax = plt.subplots(figsize=(10,5))
+        
+        # Plot
+        ax.plot(pps_df.index, pps_df['Forecasted Price per Share ($)'], marker='o')
+        
+        # Labels
+        ax.set_title("Forecasted Price per Share Over Time")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Price per Share ($)")
+        
+        # Y-Axis control
+        min_price = pps_df['Forecasted Price per Share ($)'].min()
+        max_price = pps_df['Forecasted Price per Share ($)'].max()
+        
+        # Add a little padding to top and bottom
+        ax.set_ylim(min_price * 0.95, max_price * 1.05)
+        
+        # Grid, Style
+        ax.grid(True)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+# Show it
+st.pyplot(fig)
 
 # --- Financial Statements Section ---
 if not fin.empty:
