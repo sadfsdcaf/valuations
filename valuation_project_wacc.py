@@ -216,6 +216,23 @@ if ticker:
         st.text(f"Weight of Equity (We): {ei:.4f}")
         st.text(f"WACC: {wacc:.4f}")
 
+        st.subheader("--- Valuation Using Perpetuity Methods ---")
+        st.text(f"NOPAT: {nopat/1e6:.2f}M")
+        st.text(f"WACC: {wacc:.4f}")
+        st.text(f"Growth Rate: {gr:.4f}")
+        
+        if wacc > gr:
+            st.text(f"Valuation with Growth = NOPAT / (WACC - Growth Rate)")
+            st.text(f"                     = {nopat/1e6:.2f}M / ({wacc:.4f} - {gr:.4f})")
+            st.text(f"                     = {val_g/1e6:.2f}M")
+        else:
+            st.warning(\"WACC is less than or equal to Growth Rate — cannot calculate Valuation with Growth.\")
+        
+        st.text(\"\")
+        
+        st.text(f\"Valuation with No Growth = NOPAT / WACC\")
+        st.text(f\"                      = {nopat/1e6:.2f}M / {wacc:.4f}\")
+        st.text(f\"                      = {val_ng/1e6:.2f}M\")
 
 # --- Overlay ---
 st.markdown("---")
