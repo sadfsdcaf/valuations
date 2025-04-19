@@ -224,17 +224,7 @@ if ticker:
         st.table(gdf)
 
         # Working Capital & CCC
-        st.subheader("Working Capital Metrics (Days) + ΔNWC")
-        wc_list = []
-        for c in last5:
-            inv  = safe_col(bs, 'Inventory', c) or 0
-            ar   = safe_col(bs, 'Accounts Receivable', c) or 0
-            ap   = safe_col(bs, 'Accounts Payable', c) or 0
-            cogs = safe_col(fin, 'Cost Of Revenue', c) or 0
-            rev  = safe_col(fin, 'Total Revenue', c) or 0
-            
-            st.write("inv:", inv, type(inv), "cogs:", cogs, type(cogs))
-            # days metrics
+        # (1) Define safe_col once, _before_ you start looping
         def safe_col(df, field, col):
             if field in df.index and col in df.columns:
                 val = df.at[field, col]
@@ -242,16 +232,24 @@ if ticker:
                     return float(val)
                 except (TypeError, ValueError):
                     return 0.0
-            return 0.0    
-            
-            dio = int(round((inv / cogs) * 365)) if cogs > 0 else None
-            dso  = int(round(ar   / rev  * 365)) if rev  else None
-            dpo  = int(round(ap   / cogs * 365)) if cogs else None
-            ccc  = int(round((dio or 0) + (dpo or 0) - (dso or 0)))
+            return 0.0
         
-            # NWC and its year‑over‑year change placeholder
+        st.subheader("Working Capital Metrics (Days) + ΔNWC")
+        wc_list = []
+        for c in last5:
+            inv  = safe_col(bs, 'Inventory', c)
+            ar   = safe_col(bs, 'Accounts Receivable', c)
+            ap   = safe_col(bs, 'Accounts Payable', c)
+            cogs = safe_col(fin, 'Cost Of Revenue', c)
+            rev  = safe_col(fin, 'Total Revenue', c)
+        
+            # now your days metrics — these _are_ inside the loop
+            dio = int(round(inv  / cogs * 365)) if cogs > 0 else None
+            dso = int(round(ar   / rev  * 365)) if rev  > 0 else None
+            dpo = int(round(ap   / cogs * 365)) if cogs > 0 else None
+            ccc = int(round((dio or 0) + (dpo or 0) - (dso or 0)))
+        
             nwc = inv + ar - ap
-        
             wc_list.append({
                 'Year': pd.to_datetime(c).year,
                 'DIO': dio,
@@ -261,14 +259,10 @@ if ticker:
                 'NWC': nwc/1e6  # in millions
             })
         
+        # once the loop is done, build your DataFrame as before
         wc_df = pd.DataFrame(wc_list).set_index('Year')
-        
-        # compute ΔNWC (absolute change in millions)
         wc_df['ΔNWC'] = wc_df['NWC'].diff().round(2)
-        
-        # display as table
         st.table(wc_df)
-
 
 # ——— Overlay ———
 st.markdown("---")
