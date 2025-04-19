@@ -189,16 +189,35 @@ if ticker:
         
         # Free Cash Flow
         st.subheader("Free Cash Flow")
-        metrics = {
-            "EBIT": safe_latest(fin, "EBIT"),
-            "NOPAT": nopat,
-            "Depreciation": damo,
-            "Capex": ppe,
-            "Change in NWC": wcchg,
-            "Free Cash Flow": fcf
-        }
-        for name, val in metrics.items():
-            st.write(f"**{name}**: {val/1e6:.0f}M")
+ # build a list of per‐period metrics
+        fcf_rows = []
+        for period in fin.columns:
+            # grab each piece from the financials / cash‐flow
+            ebit    = safe_col(fin, 'EBIT', period)
+            pretax  = safe_col(fin, 'Pretax Income', period)
+            taxprov = safe_col(fin, 'Tax Provision', period)
+            taxrate = (taxprov / pretax) if pretax else 0
+            nopat   = ebit * (1 - taxrate)
+        
+            damo    = safe_col(cf, 'Depreciation Amortization Depletion', period)
+            capex   = abs(safe_col(cf, 'Net PPE Purchase And Sale', period))
+            wcchg   = safe_col(cf, 'Change In Working Capital', period)
+        
+            fcf     = nopat + damo - capex - wcchg
+        
+            fcf_rows.append({
+                'Year': pd.to_datetime(period).year,
+                'EBIT (M)':     ebit/1e6,
+                'NOPAT (M)':    nopat/1e6,
+                'Depreciation (M)': damo/1e6,
+                'Capex (M)':    capex/1e6,
+                'ΔNWC (M)':     wcchg/1e6,
+                'Free Cash Flow (M)': fcf/1e6
+            })
+        
+        # turn it into a DataFrame and display
+        df_fcf = pd.DataFrame(fcf_rows).set_index('Year').round(0).astype(int)
+        st.table(df_fcf)
 
         # Financial Statement (M)
         st.subheader("Income Statement (M) — Last Published")
