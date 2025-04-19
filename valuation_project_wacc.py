@@ -250,62 +250,66 @@ if ticker:
         st.table(pd.DataFrame(valuation_data))
 
 # --- Financial Statements Section ---
+if not fin.empty:
+    ...
+    st.table(pd.DataFrame(valuation_data))
 
-st.subheader("Financial Statements (in Millions)")
+    # --- Financial Statements Section ---
 
-st.markdown("**Income Statement (M) — Last Published**")
-st.dataframe(fin.applymap(format_millions))
+    st.subheader("Financial Statements (in Millions)")
 
-st.markdown("**Balance Sheet (M)**")
-st.dataframe(bs.applymap(format_millions))
+    st.markdown("**Income Statement (M) — Last Published**")
+    st.dataframe(fin.applymap(format_millions))
 
-st.markdown("**Cash Flow Statement (M)**")
-st.dataframe(cf.applymap(format_millions))
+    st.markdown("**Balance Sheet (M)**")
+    st.dataframe(bs.applymap(format_millions))
 
-# --- Key Financial Metrics (5 Years) ---
+    st.markdown("**Cash Flow Statement (M)**")
+    st.dataframe(cf.applymap(format_millions))
 
-st.subheader("Key Financials (M) — Last 5 Years")
-mets = ["Total Revenue", "Gross Profit", "EBIT", "EBITDA"]
-last5 = fin.columns[:5]
-kdf = fin.reindex(mets).loc[:, last5].applymap(format_millions)
-yrs = [pd.to_datetime(c).year for c in last5][::-1]
-kdf.columns = yrs
-st.table(kdf)
+    # --- Key Financial Metrics (5 Years) ---
 
-# --- Year-over-Year Growth ---
+    st.subheader("Key Financials (M) — Last 5 Years")
+    mets = ["Total Revenue", "Gross Profit", "EBIT", "EBITDA"]
+    last5 = fin.columns[:5]
+    kdf = fin.reindex(mets).loc[:, last5].applymap(format_millions)
+    yrs = [pd.to_datetime(c).year for c in last5][::-1]
+    kdf.columns = yrs
+    st.table(kdf)
 
-st.subheader("Year‑over‑Year Growth (%)")
-gdf = (kdf.pct_change(axis=1).iloc[:,1:] * 100).round().astype(int)
-gdf.columns = [f"{b} vs {a}" for a,b in zip(yrs[:-1], yrs[1:])]
-st.table(gdf)
+    # --- Year-over-Year Growth ---
 
-# --- Working Capital & CCC Metrics ---
+    st.subheader("Year‑over‑Year Growth (%)")
+    gdf = (kdf.pct_change(axis=1).iloc[:,1:] * 100).round().astype(int)
+    gdf.columns = [f"{b} vs {a}" for a,b in zip(yrs[:-1], yrs[1:])]
+    st.table(gdf)
 
-st.subheader("Working Capital Metrics (Days) + ΔNWC")
-wc_list = []
-for c in last5:
-    inv  = safe_col(bs, 'Inventory', c)
-    ar   = safe_col(bs, 'Accounts Receivable', c)
-    ap   = safe_col(bs, 'Accounts Payable', c)
-    cogs = safe_col(fin, 'Cost Of Revenue', c)
-    rev  = safe_col(fin, 'Total Revenue', c)
+    # --- Working Capital & CCC Metrics ---
 
-    dio = int(round(inv / cogs * 365)) if cogs > 0 else None
-    dso = int(round(ar / rev * 365)) if rev > 0 else None
-    dpo = int(round(ap / cogs * 365)) if cogs > 0 else None
-    ccc = int(round((dio or 0) + (dpo or 0) - (dso or 0)))
+    st.subheader("Working Capital Metrics (Days) + ΔNWC")
+    wc_list = []
+    for c in last5:
+        inv  = safe_col(bs, 'Inventory', c)
+        ar   = safe_col(bs, 'Accounts Receivable', c)
+        ap   = safe_col(bs, 'Accounts Payable', c)
+        cogs = safe_col(fin, 'Cost Of Revenue', c)
+        rev  = safe_col(fin, 'Total Revenue', c)
 
-    nwc = inv + ar - ap
-    wc_list.append({
-        'Year': pd.to_datetime(c).year,
-        'DIO': dio,
-        'DSO': dso,
-        'DPO': dpo,
-        'CCC': ccc,
-        'NWC': nwc/1e6  # in millions
-    })
+        dio = int(round(inv / cogs * 365)) if cogs > 0 else None
+        dso = int(round(ar / rev * 365)) if rev > 0 else None
+        dpo = int(round(ap / cogs * 365)) if cogs > 0 else None
+        ccc = int(round((dio or 0) + (dpo or 0) - (dso or 0)))
 
-wc_df = pd.DataFrame(wc_list).set_index('Year')
-wc_df['ΔNWC'] = wc_df['NWC'].diff().round(2)
-st.table(wc_df)
+        nwc = inv + ar - ap
+        wc_list.append({
+            'Year': pd.to_datetime(c).year,
+            'DIO': dio,
+            'DSO': dso,
+            'DPO': dpo,
+            'CCC': ccc,
+            'NWC': nwc/1e6  # in millions
+        })
 
+    wc_df = pd.DataFrame(wc_list).set_index('Year')
+    wc_df['ΔNWC'] = wc_df['NWC'].diff().round(2)
+    st.table(wc_df)
