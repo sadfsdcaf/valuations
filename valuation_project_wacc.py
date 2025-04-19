@@ -95,7 +95,7 @@ if ticker:
         ebit = safe_latest(fin, 'EBIT')
         nopat = ebit * (1 - taxrate)
         damo = safe_latest(cf, 'Depreciation Amortization Depletion')
-        ppe = abs(safe_latest(cf, 'Net PPE Purchase And Sale'))
+        ppe = abs(safe_latest(cf, 'Net PPE'))
         wcchg = safe_latest(cf, 'Change In Working Capital')
         fcf = nopat + damo - ppe - wcchg
 
