@@ -171,7 +171,7 @@ if ticker:
 
         # Gross & Net PPE
         gross_ppe = safe_latest(fin, "Property, Plant & Equipment, Gross")
-        net_ppe = safe_latest(fin, "Property, Plant & Equipment, Net")
+        net_ppe = safe_latest(fin, "Net PPE")
 
         st.subheader("PPE on the Balance Sheet")
         metrics = {
