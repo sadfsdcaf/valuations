@@ -168,6 +168,34 @@ if ticker:
         st.write(f"Retention Ratio (RR): {rr*100:.2f}%")
         st.write(f"Growth Rate (g): {gr*100:.2f}%")
 
+        st.subheader("--- Cost of Equity and Cost of Debt Calculation ---")
+        st.text(f"Cost of Equity (rₑ) = Risk-Free Rate + Beta × Market Risk Premium")
+        st.text(f"                  = {ry:.4f} + {beta:.2f} × {market_risk_premium:.4f}")
+        st.text(f"                  = {er_eq:.4f}")
+        
+        st.text("")
+        st.text(f"Cost of Debt (r_d) = Risk-Free Rate + Credit Spread")
+        st.text(f"                 = {ry:.4f} + {credit_spread:.4f}")
+        st.text(f"                 = {er_de:.4f}")
+        
+        st.subheader("--- Capital Structure Calculations ---")
+        st.text(f"Debt to Invested Capital (D/IC) = Total Debt / Invested Capital")
+        st.text(f"                               = {td:.2f} / {tic:.2f}")
+        st.text(f"                               = {td / tic:.4f}" if tic else "                               = N/A")
+        
+        st.text("")
+        st.text(f"Equity to Invested Capital (E/IC) = Total Equity / Invested Capital")
+        st.text(f"                                 = {te:.2f} / {tic:.2f}")
+        st.text(f"                                 = {te / tic:.4f}" if tic else "                                 = N/A")
+        
+        st.text("")
+        st.text(f"Debt to Equity (D/E) = Total Debt / Total Equity")
+        st.text(f"                    = {td:.2f} / {te:.2f}")
+        st.text(f"                    = {td / te:.4f}" if te else "                    = N/A")
+
+        
+
+
 # --- Overlay ---
 st.markdown("---")
 st.subheader("Inventory/Sales Overlay")
