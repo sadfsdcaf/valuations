@@ -187,36 +187,44 @@ if ticker:
         })
         st.table(df_ppe)
         
-               # Free Cash Flow
-        st.subheader("Free Cash Flow")
-        # build a list of per‐period metrics
-        fcf_rows = []
-        for period in fin.columns:
-            ebit    = safe_col(fin, 'EBIT', period)
-            pretax  = safe_col(fin, 'Pretax Income', period)
-            taxprov = safe_col(fin, 'Tax Provision', period)
-            taxrate = (taxprov / pretax) if pretax else 0
-            nopat   = ebit * (1 - taxrate)
+    # Free Cash Flow
+    st.subheader("Free Cash Flow")
 
-            damo    = safe_col(cf, 'Depreciation Amortization Depletion', period)
-            capex   = abs(safe_col(cf, 'Net PPE Purchase And Sale', period))
-            wcchg   = safe_col(cf, 'Change In Working Capital', period)
+    # build a list of per-period metrics
+    fcf_rows = []
+    for period in fin.columns:
+        # EBIT and tax calculations
+        ebit    = safe_col(fin, 'EBIT', period)
+        pretax  = safe_col(fin, 'Pretax Income', period)
+        taxprov = safe_col(fin, 'Tax Provision', period)
+        taxrate = (taxprov / pretax) if pretax else 0
+        nopat   = ebit * (1 - taxrate)
 
-            fcf     = nopat + damo - capex - wcchg
+        # Cash flow components
+        damo    = safe_col(cf, 'Depreciation Amortization Depletion', period)
+        capex   = abs(safe_col(cf, 'Net PPE Purchase And Sale', period))
+        wcchg   = safe_col(cf, 'Change In Working Capital', period)
 
-            fcf_rows.append({
-                'Year': pd.to_datetime(period).year,
-                'EBIT (M)':     ebit/1e6,
-                'NOPAT (M)':    nopat/1e6,
-                'Depreciation (M)': damo/1e6,
-                'Capex (M)':    capex/1e6,
-                'ΔNWC (M)':     wcchg/1e6,
-                'Free Cash Flow (M)': fcf/1e6
-            })
+        # Free Cash Flow calculation
+        fcf     = nopat + damo - capex - wcchg
 
-        # now that the loop is done, display it
+        # Append to rows
+        fcf_rows.append({
+            'Year': pd.to_datetime(period).year,
+            'EBIT (M)':         ebit/1e6,
+            'NOPAT (M)':        nopat/1e6,
+            'Depreciation (M)': damo/1e6,
+            'Capex (M)':        capex/1e6,
+            'ΔNWC (M)':         wcchg/1e6,
+            'Free Cash Flow (M)': fcf/1e6
+        })
+
+    # Display results or warning
+    if fcf_rows:
         df_fcf = pd.DataFrame(fcf_rows).set_index('Year').round(0).astype(int)
         st.table(df_fcf)
+    else:
+        st.warning("No periods available to calculate Free Cash Flow.")
 
 
         # Financial Statement (M)
