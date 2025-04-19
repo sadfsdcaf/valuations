@@ -54,7 +54,7 @@ def get_fred_data(series_id, start, end):
     return df
 
 # ——— Main Section ———
-ticker = st.text_input("Enter Ticker:", "COKE")
+ticker = st.text_input("Enter Ticker:", "DOCN")
 if ticker:
     tk = fetch_ticker(ticker)
     info = tk.info
@@ -73,81 +73,98 @@ if ticker:
         st.warning("No historical price.")
 
     # Annual data
-    fin = tk.financials
-    bs  = tk.balance_sheet
-    cf  = tk.cashflow
-    if fin.empty:
-        st.warning("No annual financials found.")
+    # Annual Financials
+    tk_fin = tk.financials
+    tk_bs = tk.balance_sheet
+    tk_cf = tk.cashflow
+    
+    if tk_fin.empty:
+        print("No annual financials found.")
     else:
-        latest = fin.columns[0]
-
-        # Safe getters
-        def safe_latest(df, field): return df.at[field, latest] if field in df.index else 0
-        def safe_col(df, field, col): return df.at[field, col] if field in df.index else 0
-
-        # Compute metrics
-        total_revenue = safe_latest(fin, 'Total Revenue')
-        pretax = safe_latest(fin, 'Pretax Income')
-        taxprov = safe_latest(fin, 'Tax Provision')
-        net_ppe = safe_latest(fin, 'Net PPE')
-        gross_ppe = safe_latest(fin, 'Gross PPE')
-        capex = safe_latest(cf, 'Capital Expenditure')
+        latest = tk_fin.columns[0]
+    
+        # Pull and display live 10yr Treasury yield
+        ry = get_10yr_treasury_yield()
+        print(f"10-Year Treasury Yield (Risk-Free Rate): {ry:.4f}")
+    
+        # Metrics
+        total_revenue = safe_latest(tk_fin, 'Total Revenue')
+        pretax = safe_latest(tk_fin, 'Pretax Income')
+        taxprov = safe_latest(tk_fin, 'Tax Provision')
+        net_ppe = safe_latest(tk_fin, 'Net PPE')
+        gross_ppe = safe_latest(tk_fin, 'Gross PPE')
+        capex = safe_latest(tk_cf, 'Capital Expenditure')
         taxrate = (taxprov / pretax) if pretax else 0
-        ebit = safe_latest(fin, 'EBIT')
-        ebitda = safe_latest(fin, 'EBITDA')
+        ebit = safe_latest(tk_fin, 'EBIT')
+        ebitda = safe_latest(tk_fin, 'EBITDA')
+        damo = safe_latest(tk_cf, 'Depreciation Amortization Depletion')
+        ppe = abs(safe_latest(tk_cf, 'Net PPE'))
+        wcchg = safe_latest(tk_cf, 'Change In Working Capital')
+    
+        # NOPAT and FCF
         nopat = ebit * (1 - taxrate)
-        damo = safe_latest(cf, 'Depreciation Amortization Depletion')
-        ppe = abs(safe_latest(cf, 'Net PPE'))
-        wcchg = safe_latest(cf, 'Change In Working Capital')
         fcf = nopat + damo - capex - wcchg
-        
+    
         # Debt & Equity
-        ltd = safe_latest(bs, 'Long Term Debt')
-        std = safe_latest(bs, 'Short Term Debt')
-        td = safe_latest(bs, 'Total Debt')
-        te = safe_latest(bs, 'Total Equity Gross Minority Interest')
-        tic = safe_latest(bs, 'Invested Capital')
-
-        # WACC inputs
-        # ——— Assumptions ———
-        market_risk_premium = 0.05  # 5%
-        credit_spread = 0.01        # 1% over risk-free rate
-        
-        # ——— Inputs ———
+        ltd = safe_latest(tk_bs, 'Long Term Debt')
+        std = safe_latest(tk_bs, 'Short Term Debt')
+        td = ltd + std
+        te = safe_latest(tk_bs, 'Total Equity Gross Minority Interest')
+        tic = safe_latest(tk_bs, 'Invested Capital')
+    
+        # Cost of Capital Inputs
+        market_risk_premium = 0.05
+        credit_spread = 0.01
+    
         beta = info.get('beta', 1)
-        ry = get_10yr_treasury_yield()  # 10Y Treasury Yield (Risk-Free Rate)
-        
-        # ——— Cost of Capital ———
-        er_eq = ry + beta * market_risk_premium    # Expected return on equity
-        er_de = ry + credit_spread                 # Expected return on debt
-        
-        # ——— Capital Structure ———
-        di = td / tic if tic else 0  # Debt / Invested Capital
-        ei = te / tic if tic else 0  # Equity / Invested Capital
-        
-        # ——— Weighted Average Cost of Capital (WACC) ———
+    
+        er_eq = ry + beta * market_risk_premium
+        er_de = ry + credit_spread
+    
+        print("\n--- Cost of Equity and Cost of Debt Calculation ---")
+        print(f"Cost of Equity (rₑ) = Risk-Free Rate + Beta × Market Risk Premium")
+        print(f"                  = {ry:.4f} + {beta:.2f} × {market_risk_premium:.4f}")
+        print(f"                  = {er_eq:.4f}")
+        print()
+        print(f"Cost of Debt (r_d) = Risk-Free Rate + Credit Spread")
+        print(f"                 = {ry:.4f} + {credit_spread:.4f}")
+        print(f"                 = {er_de:.4f}")
+    
+        print("\n--- Capital Structure Calculations ---")
+        print(f"Debt to Invested Capital (D/IC) = Total Debt / Invested Capital")
+        print(f"                               = {td:.2f} / {tic:.2f}")
+        print(f"                               = {td / tic:.4f}" if tic else "                               = N/A")
+        print(f"\nEquity to Invested Capital (E/IC) = Total Equity / Invested Capital")
+        print(f"                                 = {te:.2f} / {tic:.2f}")
+        print(f"                                 = {te / tic:.4f}" if tic else "                                 = N/A")
+        print(f"\nDebt to Equity (D/E) = Total Debt / Total Equity")
+        print(f"                    = {td:.2f} / {te:.2f}")
+        print(f"                    = {td / te:.4f}" if te else "                    = N/A")
+    
+        di = td / (td + te) if (td + te) else 0
+        ei = te / (td + te) if (td + te) else 0
+    
         wacc = (ei * er_eq) + (di * er_de * (1 - taxrate))
-
-        st.metric("WACC", f"{wacc:.2%}")
-        st.metric("Cost of Equity", f"{er_eq:.2%}")
-        st.metric("Cost of Debt (after-tax)", f"{er_de*(1-taxrate):.2%}")
-        
-        # ROIC & growth
-        rr = ((ppe - damo) + wcchg) / nopat if nopat else 0
+    
+        # ROIC and Growth
         roic = nopat / tic if tic else 0
-        gr = rr / roic if roic else 0
-
+        change_in_invested_capital = ppe + wcchg
+        if change_in_invested_capital <= 0:
+            rr = 0
+            gr = 0
+        else:
+            rr = change_in_invested_capital / nopat if nopat else 0
+            gr = rr * roic if roic else 0
+    
         # Valuations
         val_g = nopat / (wacc - gr) if wacc > gr else 0
         val_ng = nopat / wacc if wacc else 0
-
+    
         # EBIT-based FCF
         ebit_nopat = ebit * (1 - taxrate)
         fcf_ebit = ebit_nopat + damo - ppe - wcchg
-
+    
         # Summary Table
-        st.subheader("Summary Table")
-        
         df_sum = pd.DataFrame({
             'Metric': [
                 'EBITDA',
@@ -182,12 +199,40 @@ if ticker:
                 info.get('marketCap', 0)/1e6
             ]
         })
-        # replace inf, fillna, round and convert
+    
+        print("\n--- Financial Summary ---")
+        display(df_sum)
+    
+        # ROIC and Growth Section
+        print("\n--- ROIC and Growth Analysis ---")
+        print(f"Return on Invested Capital (ROIC): {roic*100:.2f}%")
+        print(f"Change in Invested Capital (Net PPE + NWC): ${change_in_invested_capital/1e6:.2f}M")
+        print(f"Change in Invested Capital over NOPAT (RR): {rr*100:.2f}%")
+        print(f"Growth Rate (g): {gr*100:.2f}%")
+    
+        # Detailed WACC Section
+        market_value_equity = info.get('marketCap', 0) / 1e6
+        market_value_debt = td / 1e9
+        income_tax_expense = safe_latest(tk_fin, 'Income Tax Expense') / 1e6
+        ebt = pretax / 1e6
+        effective_tax_rate = income_tax_expense / ebt if ebt else 0
+    
+        print("\n--- WACC Detailed Breakdown ---")
+        print(f"Risk-Free Rate: {ry:.4f}")
+        print(f"Beta: {beta:.2f}")
+        print(f"Market Risk Premium: {market_risk_premium:.4f}")
+        print(f"Cost of Equity: {er_eq:.4f}")
+        print(f"Market Value of Equity ($M): {market_value_equity:.2f}")
+        print(f"Market Value of Debt ($Bn): {market_value_debt:.2f}")
+        print(f"Cost of Debt: {er_de:.4f}")
+        print(f"Income Tax Expense ($M): {income_tax_expense:.2f}")
+        print(f"Earnings Before Tax (EBT) ($M): {ebt:.2f}")
+        print(f"Effective Tax Rate: {taxrate:.4f}")
+        print(f"Weight of Debt (Wd): {di:.4f}")
+        print(f"Weight of Equity (We): {ei:.4f}")
+        print(f"WACC: {wacc:.4f}")
         df_sum['Value'] = df_sum['Value'].replace([np.inf, -np.inf], np.nan).fillna(0).round().astype(int)
         st.table(df_sum)
-
-        # PPE Fields
-        st.write("Available PPE fields:", [i for i in fin.index if 'PPE' in i])
 
         # Free Cash Flow by year
         st.subheader("Free Cash Flow by Year")
