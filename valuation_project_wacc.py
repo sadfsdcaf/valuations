@@ -99,7 +99,7 @@ if ticker:
         ppe = abs(safe_latest(cf, 'Net PPE'))
         wcchg = safe_latest(cf, 'Change In Working Capital')
         fcf = nopat + damo - capex - wcchg
-
+        
         # Debt & Equity
         ltd = safe_latest(bs, 'Long Term Debt')
         std = safe_latest(bs, 'Short Term Debt')
@@ -177,7 +177,7 @@ if ticker:
             ebit = safe_col(fin, 'EBIT', period)
             tax_rate = safe_latest(fin, 'Tax Rate For Calcs')
             nopat = ebit * (1 - taxrate)
-
+            capex = safe_col(cf, 'Capital Expenditure', period)
             damo = safe_col(fin, 'Reconciled Depreciation', period)
             
             wcchg = safe_col(cf, 'Change In Working Capital', period)
