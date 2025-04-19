@@ -211,11 +211,11 @@ if ticker:
         st.text(f"Cost of Debt: {er_de:.4f}")
         st.text(f"Income Tax Expense ($M): {income_tax_expense:.2f}")
         st.text(f"Earnings Before Tax (EBT) ($M): {ebt:.2f}")
-        st.text(f"Effective Tax Rate: {taxrate:.4f}")
+        st.text(f"Effective Tax Rate: {effective_tax_rate:.4f}")
         st.text(f"Weight of Debt (Wd): {di:.4f}")
         st.text(f"Weight of Equity (We): {ei:.4f}")
         st.text(f"WACC: {wacc:.4f}")
-
+        
         st.subheader("--- Valuation Using Perpetuity Methods ---")
         st.text(f"NOPAT: {nopat/1e6:.2f}M")
         st.text(f"WACC: {wacc:.4f}")
@@ -226,14 +226,13 @@ if ticker:
             st.text(f"                     = {nopat/1e6:.2f}M / ({wacc:.4f} - {gr:.4f})")
             st.text(f"                     = {val_g/1e6:.2f}M")
         else:
-            st.warning(\"WACC is less than or equal to Growth Rate — cannot calculate Valuation with Growth.\")
+            st.warning("WACC is less than or equal to Growth Rate — cannot calculate Valuation with Growth.")
         
-        st.text(\"\")
+        st.text("")
         
-        st.text(f\"Valuation with No Growth = NOPAT / WACC\")
-        st.text(f\"                      = {nopat/1e6:.2f}M / {wacc:.4f}\")
-        st.text(f\"                      = {val_ng/1e6:.2f}M\")
-
+        st.text(f"Valuation with No Growth = NOPAT / WACC")
+        st.text(f"                      = {nopat/1e6:.2f}M / {wacc:.4f}")
+        st.text(f"                      = {val_ng/1e6:.2f}M")
 # --- Overlay ---
 st.markdown("---")
 st.subheader("Inventory/Sales Overlay")
