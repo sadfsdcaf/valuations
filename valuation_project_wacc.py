@@ -54,7 +54,7 @@ def get_fred_data(series_id, start, end):
     return df
 
 # ——— Main Section ———
-ticker = st.text_input("Enter Ticker:", "HD")
+ticker = st.text_input("Enter Ticker:", "COKE")
 if ticker:
     tk = fetch_ticker(ticker)
     info = tk.info
@@ -170,36 +170,19 @@ if ticker:
         # PPE Fields
         st.write("Available PPE fields:", [i for i in fin.index if 'PPE' in i])
 
-        # Gross & Net PPE
-        gross_ppe = safe_latest(fin, "Property, Plant & Equipment, Gross")
-        net_ppe = safe_latest(fin, "Net PPE")
-
-        st.subheader("PPE on the Balance Sheet")
-        metrics = {
-            "Gross PPE (M)": gross_ppe/1e6,
-            "Net PPE (M)": net_ppe/1e6
-        }
-        df_ppe = pd.DataFrame({
-            "Metric": list(metrics.keys()),
-            "Value": [round(v) for v in metrics.values()]
-        })
-        st.table(df_ppe)
-
         # Free Cash Flow by year
         st.subheader("Free Cash Flow by Year")
         fcf_rows = []
         for period in fin.columns:
             ebit = safe_col(fin, 'EBIT', period)
-            pretax = safe_col(fin, 'Pretax Income', period)
-            taxprov = safe_col(fin, 'Tax Provision', period)
-            taxrate = (taxprov / pretax) if pretax else 0
+            tax_rate = safe_latest(fin, 'Tax Rate For Calcs')
             nopat = ebit * (1 - taxrate)
 
-            damo = safe_col(cf, 'Depreciation Amortization Depletion', period)
+            damo = safe_col(cf, 'Reconciled Depreciation', period)
             
             wcchg = safe_col(cf, 'Change In Working Capital', period)
 
-            fcf = nopat + damo - ppe - wcchg
+            fcf = nopat + damo - capex - wcchg
 
             fcf_rows.append({
                 'Year': pd.to_datetime(period).year,
