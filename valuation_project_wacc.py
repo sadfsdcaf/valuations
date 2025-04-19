@@ -248,23 +248,24 @@ if ticker:
             ]
         }
         st.table(pd.DataFrame(valuation_data))
-
         # --- Forecasting Section ---
         st.markdown("---")
-        st.subheader("📈 Forecasting NOPAT (Flexible Inputs)")
+        st.subheader("📈 Forecasting NOPAT with Compounding Growth (7 Years)")
         
         # Inputs
         g_forecast = st.number_input("Enter Growth Rate (g) for Forecasting (%)", value=5.0) / 100
         b_forecast = st.number_input("Enter Reinvestment Rate (b)", value=0.2)
         years_forecast = st.selectbox("Select Number of Years to Forecast:", options=[5, 7, 10, 20], index=1)
         
-        # Forecast calculation
+        # Forecast calculation (compounding)
         years = list(range(1, years_forecast + 1))
         forecast_nopat = []
+        current_nopat = nopat  # Start with the latest real NOPAT
         
         for n in years:
+            current_nopat = current_nopat * (1 + g_forecast)  # grow each year
             if (wacc - g_forecast) > 0:
-                forecast_value = (nopat * (1 - b_forecast)) / (wacc - g_forecast) ** n
+                forecast_value = (current_nopat * (1 - b_forecast)) / (wacc - g_forecast)
             else:
                 forecast_value = 0
             forecast_nopat.append(forecast_value / 1e6)  # in millions
@@ -281,11 +282,6 @@ if ticker:
         # Display Chart
         st.subheader("Forecast Visualization 📈")
         st.line_chart(forecast_df.set_index("Year"))
-
-
-
-
-
 
 
 
