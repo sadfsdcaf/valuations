@@ -137,14 +137,15 @@ if ticker:
         # ROIC, Growth, Valuation
         roic = nopat / tic if tic else 0
         change_in_invested_capital = ppe + wcchg
-
         rr = (change_in_invested_capital / nopat) if (nopat and change_in_invested_capital > 0) else 0
         gr = rr * roic if roic else 0
 
         val_g = nopat / (wacc - gr) if wacc > gr else 0
         val_ng = nopat / wacc if wacc else 0
 
- roic_growth_data = {
+        # --- Now show all in tables ---
+        st.subheader("--- ROIC and Growth Analysis ---")
+        roic_growth_data = {
             "Metric": [
                 "Return on Invested Capital (ROIC)",
                 "Change in Invested Capital (Net PPE + NWC)",
@@ -158,9 +159,9 @@ if ticker:
                 f"{gr*100:.2f}%"
             ]
         }
-        st.subheader("--- ROIC and Growth Analysis ---")
         st.table(pd.DataFrame(roic_growth_data))
 
+        st.subheader("--- Cost of Equity and Cost of Debt Calculation ---")
         cost_of_capital_data = {
             "Metric": [
                 "Cost of Equity (rₑ)",
@@ -171,9 +172,9 @@ if ticker:
                 f"{er_de:.4f}"
             ]
         }
-        st.subheader("--- Cost of Equity and Cost of Debt Calculation ---")
         st.table(pd.DataFrame(cost_of_capital_data))
 
+        st.subheader("--- Capital Structure Calculations ---")
         capital_structure_data = {
             "Metric": [
                 "Debt to Invested Capital (D/IC)",
@@ -186,9 +187,9 @@ if ticker:
                 f"{td/te:.4f}" if te else "N/A"
             ]
         }
-        st.subheader("--- Capital Structure Calculations ---")
         st.table(pd.DataFrame(capital_structure_data))
 
+        st.subheader("--- WACC Detailed Breakdown ---")
         market_value_equity = info.get('marketCap', 0) / 1e6
         market_value_debt = td / 1e9
         income_tax_expense = safe_latest(fin, 'Income Tax Expense') / 1e6
@@ -227,9 +228,9 @@ if ticker:
                 f"{wacc:.4f}"
             ]
         }
-        st.subheader("--- WACC Detailed Breakdown ---")
         st.table(pd.DataFrame(wacc_data))
 
+        st.subheader("--- Valuation Using Perpetuity Methods ---")
         valuation_data = {
             "Metric": [
                 "NOPAT",
@@ -246,10 +247,9 @@ if ticker:
                 f"${val_ng/1e6:.2f}M"
             ]
         }
-        st.subheader("--- Valuation Using Perpetuity Methods ---")
         st.table(pd.DataFrame(valuation_data))
 
-# --- Overlay ---
+# --- Inventory/Sales Overlay Section ---
 st.markdown("---")
 st.subheader("Inventory/Sales Overlay")
 col1, col2 = st.columns(2)
@@ -257,6 +257,7 @@ with col1:
     sd = st.date_input("FRED Start", pd.to_datetime("2000-01-01"))
 with col2:
     ed = st.date_input("FRED End", pd.to_datetime("2025-12-31"))
+
 if st.button("Plot Inv/Sales Overlay"):
     sid, _ = next(iter(FRED_SERIES.items()))
     df_f = get_fred_data(sid, sd.strftime('%Y-%m-%d'), ed.strftime('%Y-%m-%d'))
@@ -276,7 +277,7 @@ if st.button("Plot Inv/Sales Overlay"):
         ax.plot(df_f['date'], df_f['value'], label='Industry')
         ax.plot(hd_df.index, hd_df['InvSales%'], marker='o', label='Home Depot')
         ax.set_xlabel('Date')
-        ax.set_ylabel('Inv/Sales %')
+        ax.set_ylabel('Inv/Sales %")
         ax.legend()
         ax.grid(True)
         st.pyplot(fig)
