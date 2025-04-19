@@ -301,7 +301,7 @@ if ticker:
 
 # --- Price per Share Forecast Section ---
         
-st.subheader("💵 Forecasted Price Per Share")
+        st.subheader("💵 Forecasted Price Per Share")
 
         # 1. Pull Shares Outstanding automatically
         shares_outstanding = info.get('sharesOutstanding', 0) / 1e6  # millions
