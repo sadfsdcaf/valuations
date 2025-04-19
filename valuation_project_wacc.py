@@ -248,110 +248,70 @@ if ticker:
             ]
         }
         st.table(pd.DataFrame(valuation_data))
+        
         st.markdown("---")
-        st.subheader("📈 Forecasting NOPAT with Compounding Growth (Including Period 0)")
-        
-        # Inputs
-        g_forecast = st.number_input("Enter Growth Rate (g) for Forecasting (%)", value=5.0) / 100
-        b_forecast = st.number_input("Enter Reinvestment Rate (b)", value=0.2)
-        years_forecast = st.selectbox("Select Number of Years to Forecast:", options=[5, 7, 10, 20], index=1)
-        
-        # Forecasting setup
-        years = list(range(0, years_forecast + 1))  # <-- START AT 0
-        forecast_years = [datetime.now().year + n for n in years]
-        
-        # Initialize trackers
-        nopat_series = []
-        reinvestment_series = []
-        wacc_series = []
-        growth_series = []
-        value_series = []
-        
-        current_nopat = nopat  # Start at latest real NOPAT
-        
-        for n in years:
-            if n != 0:
-                current_nopat = current_nopat * (1 + g_forecast)  # grow each future year
-        
-            nopat_series.append(current_nopat / 1e6)  # NOPAT in millions
-            reinvestment_series.append(b_forecast)
-            wacc_series.append(wacc)
-            growth_series.append(g_forecast)
-        
-            if (wacc - g_forecast) > 0:
-                forecast_value = (current_nopat * (1 - b_forecast)) / (wacc - g_forecast)
-            else:
-                forecast_value = 0
-            value_series.append(forecast_value / 1e6)  # Value in millions
-        
-        # Build the DataFrame
-        forecast_diag = pd.DataFrame({
-            'NOPAT (M)': nopat_series,
-            'Reinvestment Rate (b)': reinvestment_series,
-            'WACC': wacc_series,
-            'Growth Rate (g)': growth_series,
-            'Forecasted Value (M)': value_series
-        }).T
-        
-        forecast_diag.columns = forecast_years
-        
-        # Show diagnostics table
-        st.subheader(f"📊 Forecast Diagnostics (Including Period 0)")
-        st.dataframe(forecast_diag.style.format("{:.2f}"))
+st.subheader("📈 Forecasting NOPAT with Compounding Growth (Including Period 0)")
 
-# --- Price per Share Forecast Section ---
-        
-        st.subheader("💵 Forecasted Price Per Share")
+# Inputs
+g_forecast = st.number_input("Enter Growth Rate (g) for Forecasting (%)", value=5.0) / 100
+b_forecast = st.number_input("Enter Reinvestment Rate (b)", value=0.2)
+years_forecast = st.selectbox("Select Number of Years to Forecast:", options=[5, 7, 10, 20], index=1)
 
-        # 1. Pull Shares Outstanding automatically
-        shares_outstanding = info.get('sharesOutstanding', 0) / 1e6  # millions
-        
-        if shares_outstanding <= 0:
-            st.error("Shares Outstanding data not available from Yahoo Finance.")
-        else:
-            st.success(f"Shares Outstanding: {shares_outstanding:.2f}M")
-        
-            # 2. Calculate Price per Share
-            price_per_share = np.array(value_series) / shares_outstanding  # <--- Forecasted Value ÷ Shares Outstanding
-        
-            # 3. Create a DataFrame
-            pps_df = pd.DataFrame({
-                'Year': forecast_years,
-                'Forecasted Price per Share ($)': price_per_share
-            }).set_index('Year')
-        
-            # 4. Display Table
-            st.subheader(f"Forecasted Price per Share ({len(forecast_years)} Years)")
-            st.table(pps_df.style.format({"Forecasted Price per Share ($)": "{:.2f}"}))
-        
-        # --- Price per Share Chart Section (Better Formatting) ---
-        
-        st.subheader("📈 Forecasted Price per Share Chart (Better Scale)")
-        
-        fig, ax = plt.subplots(figsize=(10,5))
-        
-        # Plot
-        ax.plot(pps_df.index, pps_df['Forecasted Price per Share ($)'], marker='o')
-        
-        # Labels
-        ax.set_title("Forecasted Price per Share Over Time")
-        ax.set_xlabel("Year")
-        ax.set_ylabel("Price per Share ($)")
-        
-        # Y-Axis control
-        min_price = pps_df['Forecasted Price per Share ($)'].min()
-        max_price = pps_df['Forecasted Price per Share ($)'].max()
-        
-        # Add a little padding to top and bottom
-        ax.set_ylim(min_price * 0.95, max_price * 1.05)
-        
-        # Grid, Style
-        ax.grid(True)
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
+# Forecasting setup
+years = list(range(0, years_forecast + 1))  # <-- Start at Period 0
+forecast_years = [datetime.now().year + n for n in years]
 
-# Show it
-st.pyplot(fig)
+# Get Shares Outstanding
+shares_outstanding = info.get('sharesOutstanding', 0) / 1e6  # in millions
+
+# Initialize trackers
+nopat_series = []
+reinvestment_series = []
+wacc_series = []
+growth_series = []
+value_series = []
+price_per_share_series = []
+
+current_nopat = nopat  # Start with latest real NOPAT
+
+for n in years:
+    if n != 0:
+        current_nopat = current_nopat * (1 + g_forecast)  # grow each future year
+
+    nopat_series.append(current_nopat / 1e6)  # NOPAT in millions
+    reinvestment_series.append(b_forecast)
+    wacc_series.append(wacc)
+    growth_series.append(g_forecast)
+
+    if (wacc - g_forecast) > 0:
+        forecast_value = (current_nopat * (1 - b_forecast)) / (wacc - g_forecast)
+    else:
+        forecast_value = 0
+    value_series.append(forecast_value / 1e6)  # Value in millions
+
+    # Calculate price per share
+    if shares_outstanding > 0:
+        price_per_share = forecast_value / shares_outstanding
+    else:
+        price_per_share = 0
+    price_per_share_series.append(price_per_share)
+
+# Build the Diagnostics DataFrame
+forecast_diag = pd.DataFrame({
+    'NOPAT (M)': nopat_series,
+    'Reinvestment Rate (b)': reinvestment_series,
+    'WACC': wacc_series,
+    'Growth Rate (g)': growth_series,
+    'Forecasted Value (M)': value_series,
+    'Shares Outstanding (M)': [shares_outstanding] * len(years),
+    'Forecasted Price per Share ($)': price_per_share_series
+}).T
+
+forecast_diag.columns = forecast_years
+
+# Show the full table
+st.subheader(f"📊 Forecast Diagnostics (Including Period 0 and Shares)")
+st.dataframe(forecast_diag.style.format("{:.2f}"))
 
 # --- Financial Statements Section ---
 if not fin.empty:
