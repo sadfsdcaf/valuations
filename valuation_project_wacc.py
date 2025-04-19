@@ -173,10 +173,10 @@ if ticker:
                 td/1e6,
                 te/1e6,
                 tic/1e6,
-                wacc,
+                wacc*100,
                 beta,
-                roic,
-                gr,
+                roic*100,
+                gr*100,
                 val_g/1e6,
                 val_ng/1e6,
                 info.get('marketCap', 0)/1e6
