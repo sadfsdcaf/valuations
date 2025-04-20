@@ -106,9 +106,12 @@ if ticker:
         td = ltd + std
         te = safe_latest(bs, 'Total Equity Gross Minority Interest')
         tic = safe_latest(bs, 'Invested Capital')
+        
+        di = td / (td + te) if (td + te) else 0
+        ei = te / (td + te) if (td + te) else 0
+        de = td / te if te else 0
 
         beta = info.get('beta', 1)
-
         market_risk_premium = 0.0443
         credit_spread = 0.026
         debt_beta = credit_spread / market_risk_premium        
@@ -117,8 +120,8 @@ if ticker:
 
         # Re-lever Equity Beta (β_E)
         # Formula: β_E = β_A + (β_A - β_D) × (D/E) × (1 - T)
-        de_ratio = td / te if te else 0
-        beta_e_relevered = beta_a + (beta_a - beta_d) * de_ratio * (1 - tax_rate)
+
+        beta_e_relevered = beta_a + (beta_a - debt_beta) * de_ratio * (1 - tax_rate)
 
         # Cost of Capital - Relevered
         r_e = ry + beta_e_relevered * market_risk_premium
@@ -128,8 +131,6 @@ if ticker:
         er_eq = ry + beta * market_risk_premium
         er_de = ry + credit_spread * debt_beta
 
-        di = td / (td + te) if (td + te) else 0
-        ei = te / (td + te) if (td + te) else 0
 
         wacc = (ei * er_eq) + (di * er_de * (1 - tax_rate))
 
