@@ -187,7 +187,7 @@ if ticker:
         st.table(pd.DataFrame({
             "Metric": ["Risk-Free Rate", "Beta", "Market Risk Premium", "Cost of Equity", "Market Cap ($M)", "Debt ($Bn)",
                        "Cost of Debt", "Tax Rate", "Effective Tax Rate", "WACC"],
-            "Value": [f"{ry:.4f}", f"{beta:.2f}", f"{market_risk_premium:.4f}", f"{r_e:.4f}",
+            "Value": [f"{ry:.4f}", f"{beta_obs :.2f}", f"{market_risk_premium:.4f}", f"{r_e:.4f}",
                       f"{info.get('marketCap',0)/1e6:.2f}", f"{td/1e9:.2f}",
                       f"{r_d:.4f}", f"{tax_rate:.2f}", f"{taxprov/pretax if pretax else 0:.4f}", f"{wacc:.4f}"]
         }))
