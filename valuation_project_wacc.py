@@ -122,7 +122,7 @@ if ticker:
         ) if levered_denom else 0
 
         # 6) Cost of Debt & Assets
-        r_d = ry + spread * beta_d
+        r_d = ry + spread 
         r_a = ry + mrp * beta_a
 
         # 7) Re‑levered Cost of Equity: r_E = r_A + (r_A – r_D)×(D/E)×(1–T)
@@ -185,7 +185,7 @@ if ticker:
 
         st.subheader("--- WACC Detailed Breakdown ---")
         st.table(pd.DataFrame({
-            "Metric": ["Risk-Free Rate", "Beta", "Market Risk Premium", "Cost of Equity", "Market Cap ($M)", "Debt ($Bn)",
+            "Metric": ["Risk-Free Rate", "Beta (Observed)", "Market Risk Premium", "Cost of Equity", "Market Cap ($M)", "Debt ($Bn)",
                        "Cost of Debt", "Tax Rate", "Effective Tax Rate", "WACC"],
             "Value": [f"{ry:.4f}", f"{beta_obs :.2f}", f"{mrp:.4f}", f"{r_e:.4f}",
                       f"{info.get('marketCap',0)/1e6:.2f}", f"{td/1e9:.2f}",
