@@ -125,7 +125,7 @@ if ticker:
 
         # Cost of Capital - Relevered
         r_e = ry + beta_e_relevered * market_risk_premium
-        r_d = ry + credit_spread * beta_d
+        r_d = ry + credit_spread * debt_beta
         
       
         er_eq = ry + beta * market_risk_premium
