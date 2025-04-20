@@ -105,7 +105,7 @@ if ticker:
         std = safe_latest(bs, 'Short Term Debt')
         td  = ltd + std
         te  = abs(safe_latest(bs, 'Total Equity Gross Minority Interest'))  # ABSOLUTE here!!
-        V   = td + te
+        tic   = td + te
 
         # 4) Betas & market assumptions
         beta_obs = info.get('beta', 1.0)
@@ -130,8 +130,8 @@ if ticker:
         r_e = r_a + (r_a - r_d)*de*(1 - tax_rate)
 
         # 8) WACC: r_WACC = r_D·(D/V)·(1–T) + r_E·(E/V)
-        w_d  = td/V if V else 0
-        w_e  = te/V if V else 0
+        w_d  = td/tic if tic else 0
+        w_e  = te/tic if tic else 0
         wacc = r_d*w_d*(1 - tax_rate) + r_e*w_e
 
 
@@ -156,7 +156,7 @@ if ticker:
 
 
         # ROIC, Growth, Valuation
-        roic = nopat / V if V else 0
+        roic = nopat / tic if tic else 0
         change_in_invested_capital = ppe + wcchg
         rr = (change_in_invested_capital / nopat) if (nopat and change_in_invested_capital > 0) else 0
         gr = rr * roic if roic else 0
