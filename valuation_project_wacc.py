@@ -108,9 +108,10 @@ if ticker:
         tic = safe_latest(bs, 'Invested Capital')
 
         beta = info.get('beta', 1)
-        debt_beta = credit_spread / market_risk_premium
+
         market_risk_premium = 0.0443
         credit_spread = 0.026
+        debt_beta = credit_spread / market_risk_premium        
 
         er_eq = ry + beta * market_risk_premium
         er_de = ry + credit_spread * debt_beta
