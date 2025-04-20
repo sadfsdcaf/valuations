@@ -31,13 +31,12 @@ def get_10yr_treasury_yield():
     return hist['Close'].dropna().iloc[-1] / 100 if not hist.empty else 0.04
 
 def safe_latest(df, field):
-    return df.iloc[df.index.get_loc(field)].dropna().values[0] \
-           if not df.empty and field in df.index else 0
+    return df.iloc[df.index.get_loc(field)].dropna().values[0] if not df.empty and field in df.index else 0
 
 def safe_col(df, field, col):
     return df.at[field, col] if not df.empty and field in df.index and col in df.columns else 0
 
-# FRED setup (unchanged)
+# FRED setup
 API_KEY = "26c01b09f8083e30a1ee9cb929188a74"
 FRED_URL = "https://api.stlouisfed.org/fred/series/observations"
 FRED_SERIES = {"MRTSIR444USS": "Industry Inv/Sales Ratio"}
@@ -62,15 +61,15 @@ def get_fred_data(series_id, start, end):
 # --- Main Section ---
 ticker = st.text_input("Enter Ticker:", "DOCN")
 if ticker:
-    tk   = fetch_ticker(ticker)
+    tk = fetch_ticker(ticker)
     info = tk.info
 
-    # Live Price (unchanged) …
+    # Live Price
     live = info.get('currentPrice') or info.get('regularMarketPrice')
     if live:
         st.metric("Live Price", f"${live:.2f}")
 
-    # Historical Close (unchanged) …
+    # Historical Close
     st.subheader("Historical Close Price")
     hist = tk.history(period="max")
     if not hist.empty:
@@ -78,22 +77,25 @@ if ticker:
     else:
         st.warning("No historical price.")
 
-    # Pull financials
+    # Financials
     fin = tk.financials
-    bs  = tk.balance_sheet
-    cf  = tk.cashflow
+    bs = tk.balance_sheet
+    cf = tk.cashflow
 
     if not fin.empty:
-        # 1) Core P&L & CF items
+        ry = get_10yr_treasury_yield()
+
+        # Core Metrics
         pretax = safe_latest(fin, 'Pretax Income')
         taxprov = safe_latest(fin, 'Tax Provision')
         ebit = safe_latest(fin, 'EBIT')
+        ebitda = safe_latest(fin, 'EBITDA')
         damo = safe_latest(cf, 'Depreciation Amortization Depletion')
         capex = safe_latest(cf, 'Capital Expenditure')
+        ppe = abs(safe_latest(cf, 'Net PPE'))
         wcchg = safe_latest(cf, 'Change In Working Capital')
-        tic   = safe_latest(bs, 'Invested Capital')
 
-        # 2) NOPAT & FCF
+       # 2) NOPAT & FCF
         tax_rate = safe_latest(fin, 'Tax Rate For Calcs')
         nopat    = ebit * (1 - tax_rate)
         fcf      = nopat + damo - capex - wcchg
@@ -132,7 +134,8 @@ if ticker:
         w_e  = te/V if V else 0
         wacc = r_d*w_d*(1 - tax_rate) + r_e*w_e
 
-        # --- Display Key Metrics ---
+
+      # --- Display Key Metrics ---
         st.subheader("Key Financial Metrics")
         st.table(pd.DataFrame({
             'Metric': [
