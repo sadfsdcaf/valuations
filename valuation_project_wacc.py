@@ -113,7 +113,7 @@ if ticker:
         credit_spread = 0.026
         debt_beta = credit_spread / market_risk_premium        
         levered_denom = td * (1 - tax_rate) + te
-        beta_a = ((td * (1 - tax_rate)) / levered_denom) * debt_beta + (te / levered_denom) * beta_e if levered_denom else 0
+        beta_a = ((td * (1 - tax_rate)) / levered_denom) * debt_beta + (te / levered_denom) * beta if levered_denom else 0
         
         st.subheader("Unlevered Asset Beta Calculation")
         st.write(f"**Asset Beta (β_A):** {beta_a:.4f}")
