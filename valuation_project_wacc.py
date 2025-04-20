@@ -31,12 +31,13 @@ def get_10yr_treasury_yield():
     return hist['Close'].dropna().iloc[-1] / 100 if not hist.empty else 0.04
 
 def safe_latest(df, field):
-    return df.iloc[df.index.get_loc(field)].dropna().values[0] if not df.empty and field in df.index else 0
+    return df.iloc[df.index.get_loc(field)].dropna().values[0] \
+           if not df.empty and field in df.index else 0
 
 def safe_col(df, field, col):
     return df.at[field, col] if not df.empty and field in df.index and col in df.columns else 0
 
-# FRED setup
+# FRED setup (unchanged)
 API_KEY = "26c01b09f8083e30a1ee9cb929188a74"
 FRED_URL = "https://api.stlouisfed.org/fred/series/observations"
 FRED_SERIES = {"MRTSIR444USS": "Industry Inv/Sales Ratio"}
@@ -61,15 +62,15 @@ def get_fred_data(series_id, start, end):
 # --- Main Section ---
 ticker = st.text_input("Enter Ticker:", "DOCN")
 if ticker:
-    tk = fetch_ticker(ticker)
+    tk   = fetch_ticker(ticker)
     info = tk.info
 
-    # Live Price
+    # Live Price (unchanged) …
     live = info.get('currentPrice') or info.get('regularMarketPrice')
     if live:
         st.metric("Live Price", f"${live:.2f}")
 
-    # Historical Close
+    # Historical Close (unchanged) …
     st.subheader("Historical Close Price")
     hist = tk.history(period="max")
     if not hist.empty:
@@ -77,78 +78,75 @@ if ticker:
     else:
         st.warning("No historical price.")
 
-    # Financials
+    # Pull financials
     fin = tk.financials
-    bs = tk.balance_sheet
-    cf = tk.cashflow
+    bs  = tk.balance_sheet
+    cf  = tk.cashflow
 
     if not fin.empty:
-        ry = get_10yr_treasury_yield()
-
-        # Core Metrics
+        # 1) Core P&L & CF items
         pretax = safe_latest(fin, 'Pretax Income')
         taxprov = safe_latest(fin, 'Tax Provision')
         ebit = safe_latest(fin, 'EBIT')
-        ebitda = safe_latest(fin, 'EBITDA')
         damo = safe_latest(cf, 'Depreciation Amortization Depletion')
         capex = safe_latest(cf, 'Capital Expenditure')
-        ppe = abs(safe_latest(cf, 'Net PPE'))
         wcchg = safe_latest(cf, 'Change In Working Capital')
+        tic   = safe_latest(bs, 'Invested Capital')
 
-        # NOPAT & FCF
+        # 2) NOPAT & FCF
         tax_rate = safe_latest(fin, 'Tax Rate For Calcs')
-        nopat = ebit * (1 - tax_rate)
-        fcf = nopat + damo - capex - wcchg
+        nopat    = ebit * (1 - tax_rate)
+        fcf      = nopat + damo - capex - wcchg
 
-        # Capital Structure
+        # 3) Balance‐sheet leverage
         ltd = safe_latest(bs, 'Long Term Debt')
         std = safe_latest(bs, 'Short Term Debt')
-        td = ltd + std
-        te = safe_latest(bs, 'Total Equity Gross Minority Interest')
-        tic = safe_latest(bs, 'Invested Capital')
-        
-        di = td / (td + te) if (td + te) else 0
-        ei = te / (td + te) if (td + te) else 0
-        de = td / te if te else 0
+        td  = ltd + std
+        te  = abs(safe_latest(bs, 'Total Equity Gross Minority Interest'))  # ABSOLUTE here!!
+        V   = td + te
 
-        beta = info.get('beta', 1)
-        market_risk_premium = 0.0443
-        credit_spread = 0.026
-        debt_beta = credit_spread / market_risk_premium        
-        levered_denom = td * (1 - tax_rate) + te
-        beta_a = ((td * (1 - tax_rate)) / levered_denom) * debt_beta + (te / levered_denom) * beta if levered_denom else 0
+        # 4) Betas & market assumptions
+        beta_obs = info.get('beta', 1.0)
+        ry       = get_10yr_treasury_yield()
+        mrp      = 0.0443
+        spread   = 0.026
+        beta_d   = spread / mrp
 
-        # Re-lever Equity Beta (β_E)
-        # Formula: β_E = β_A + (β_A - β_D) × (D/E) × (1 - T)
+        # 5) Unlevered Asset Beta: β_A = [D(1–T)/(D(1–T)+E)]·β_D + [E/(D(1–T)+E)]·β_E_obs
+        levered_denom = td*(1-tax_rate) + te
+        beta_a = (
+            (td*(1-tax_rate)/levered_denom)*beta_d
+            + (te/levered_denom)*beta_obs
+        ) if levered_denom else 0
 
-        beta_e_relevered = beta_a + (beta_a - debt_beta) * de * (1 - tax_rate)
+        # 6) Cost of Debt & Assets
+        r_d = ry + spread * beta_d
+        r_a = ry + mrp * beta_a
 
-        # Cost of Capital - Relevered
-        r_e = ry + beta_e_relevered * market_risk_premium
-        r_d = ry + credit_spread * debt_beta
-        
-      
-        er_eq = ry + beta * market_risk_premium
-        er_de = ry + credit_spread * debt_beta
+        # 7) Re‑levered Cost of Equity: r_E = r_A + (r_A – r_D)×(D/E)×(1–T)
+        de  = td/te if te else 0
+        r_e = r_a + (r_a - r_d)*de*(1 - tax_rate)
 
+        # 8) WACC: r_WACC = r_D·(D/V)·(1–T) + r_E·(E/V)
+        w_d  = td/V if V else 0
+        w_e  = te/V if V else 0
+        wacc = r_d*w_d*(1 - tax_rate) + r_e*w_e
 
-        wacc = (ei * er_eq) + (di * er_de * (1 - tax_rate))
-
-        # Display Summary
+        # --- Display Key Metrics ---
         st.subheader("Key Financial Metrics")
         st.table(pd.DataFrame({
             'Metric': [
                 'Asset Beta (β_A)',
-                'Observed Equity Beta (β_E_obs)',
-                'Re-levered Equity Beta (β_E)',
-                'Debt/Equity',
+                'Cost of Assets (r_A)',
+                'Cost of Debt (r_D)',
+                'Re-levered Cost of Equity (r_E)',
                 'WACC'
             ],
             'Value': [
                 f"{beta_a:.4f}",
-                f"{beta:.4f}",
-                f"{beta_e_relevered:.4f}",
-                f"{de:.2f}",
+                f"{r_a:.2%}",
+                f"{r_d:.2%}",
+                f"{r_e:.2%}",
                 f"{wacc:.2%}"
             ]
         }))
