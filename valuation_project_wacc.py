@@ -129,6 +129,12 @@ if ticker:
         # WACC
         wacc = (ei * er_eq) + (di * er_de * (1 - tax_rate))
 
+        
+       # Display the Unlevered Asset Beta
+        st.subheader("Unlevered Asset Beta Calculation")
+        st.write(f"**Asset Beta (β_A):** {beta_a:.4f}")
+
+
         # ROIC, Growth, Valuation
         roic = nopat / tic if tic else 0
         change_in_invested_capital = ppe + wcchg
@@ -246,7 +252,3 @@ if ticker:
         wc_df['ΔNWC'] = wc_df['NWC'].diff().round(2)
         st.subheader("Working Capital Metrics")
         st.table(wc_df)
-
-       # Display the Unlevered Asset Beta
-        st.subheader("Unlevered Asset Beta Calculation")
-        st.write(f"**Asset Beta (β_A):** {beta_a:.4f}")
