@@ -121,7 +121,7 @@ if ticker:
         # Re-lever Equity Beta (β_E)
         # Formula: β_E = β_A + (β_A - β_D) × (D/E) × (1 - T)
 
-        beta_e_relevered = beta_a + (beta_a - debt_beta) * de_ratio * (1 - tax_rate)
+        beta_e_relevered = beta_a + (beta_a - debt_beta) * de * (1 - tax_rate)
 
         # Cost of Capital - Relevered
         r_e = ry + beta_e_relevered * market_risk_premium
