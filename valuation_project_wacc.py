@@ -186,4 +186,3 @@ if ticker:
         wc_df = pd.DataFrame(wc_metrics).set_index("Year")
         st.subheader("Working Capital Metrics")
         st.table(wc_df)
-```
