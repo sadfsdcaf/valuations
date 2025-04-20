@@ -174,7 +174,7 @@ if ticker:
         st.subheader("--- Cost of Equity and Cost of Debt Calculation ---")
         st.table(pd.DataFrame({
             "Metric": ["Cost of Equity (rₑ)", "Cost of Debt (r_d)"],
-            "Value": [f"{er_eq:.4f}", f"{er_de:.4f}"]
+            "Value": [f"{r_e:.4f}", f"{r_d:.4f}"]
         }))
 
         st.subheader("--- Capital Structure Calculations ---")
