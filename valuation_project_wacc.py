@@ -107,16 +107,26 @@ if ticker:
         te = safe_latest(bs, 'Total Equity Gross Minority Interest')
         tic = safe_latest(bs, 'Invested Capital')
 
-        beta = info.get('beta', 1)
+        # Market parameters
+        beta_e = info.get('beta', 1)
         market_risk_premium = 0.0443
         credit_spread = 0.026
+        debt_beta = credit_spread / market_risk_premium
 
-        er_eq = ry + beta * market_risk_premium
-        er_de = ry + credit_spread
+        # Calculate Unlevered Asset Beta (β_A)
+        # Formula: β_A = (D*(1-T)/(D*(1-T) + E)) * β_D + (E/(D*(1-T) + E)) * β_E
+        levered_denom = td * (1 - tax_rate) + te
+        beta_a = ((td * (1 - tax_rate)) / levered_denom) * debt_beta + (te / levered_denom) * beta_e if levered_denom else 0
 
+        # Cost of Equity & Debt
+        er_eq = ry + beta_e * market_risk_premium
+        er_de = ry + credit_spread * debt_beta
+
+        # Weightings
         di = td / (td + te) if (td + te) else 0
         ei = te / (td + te) if (td + te) else 0
 
+        # WACC
         wacc = (ei * er_eq) + (di * er_de * (1 - tax_rate))
 
         # ROIC, Growth, Valuation
@@ -236,3 +246,7 @@ if ticker:
         wc_df['ΔNWC'] = wc_df['NWC'].diff().round(2)
         st.subheader("Working Capital Metrics")
         st.table(wc_df)
+
+       # Display the Unlevered Asset Beta
+        st.subheader("Unlevered Asset Beta Calculation")
+        st.write(f"**Asset Beta (β_A):** {beta_a:.4f}")
