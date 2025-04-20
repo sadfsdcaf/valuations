@@ -156,7 +156,7 @@ if ticker:
 
 
         # ROIC, Growth, Valuation
-        roic = nopat / tic if tic else 0
+        roic = nopat / V if V else 0
         change_in_invested_capital = ppe + wcchg
         rr = (change_in_invested_capital / nopat) if (nopat and change_in_invested_capital > 0) else 0
         gr = rr * roic if roic else 0
