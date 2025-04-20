@@ -146,9 +146,9 @@ if ticker:
             ],
             'Value': [
                 f"{beta_a:.4f}",
-                f"{beta_e_obs:.4f}",
+                f"{beta:.4f}",
                 f"{beta_e_relevered:.4f}",
-                f"{de_ratio:.2f}",
+                f"{de:.2f}",
                 f"{wacc:.2%}"
             ]
         }))
