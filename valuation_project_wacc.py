@@ -114,11 +114,17 @@ if ticker:
         debt_beta = credit_spread / market_risk_premium        
         levered_denom = td * (1 - tax_rate) + te
         beta_a = ((td * (1 - tax_rate)) / levered_denom) * debt_beta + (te / levered_denom) * beta if levered_denom else 0
-        
-        st.subheader("Unlevered Asset Beta Calculation")
-        st.write(f"**Asset Beta (β_A):** {beta_a:.4f}")
 
+        # Re-lever Equity Beta (β_E)
+        # Formula: β_E = β_A + (β_A - β_D) × (D/E) × (1 - T)
+        de_ratio = td / te if te else 0
+        beta_e_relevered = beta_a + (beta_a - beta_d) * de_ratio * (1 - tax_rate)
+
+        # Cost of Capital - Relevered
+        r_e = ry + beta_e_relevered * market_risk_premium
+        r_d = ry + credit_spread * beta_d
         
+      
         er_eq = ry + beta * market_risk_premium
         er_de = ry + credit_spread * debt_beta
 
@@ -126,6 +132,25 @@ if ticker:
         ei = te / (td + te) if (td + te) else 0
 
         wacc = (ei * er_eq) + (di * er_de * (1 - tax_rate))
+
+        # Display Summary
+        st.subheader("Key Financial Metrics")
+        st.table(pd.DataFrame({
+            'Metric': [
+                'Asset Beta (β_A)',
+                'Observed Equity Beta (β_E_obs)',
+                'Re-levered Equity Beta (β_E)',
+                'Debt/Equity',
+                'WACC'
+            ],
+            'Value': [
+                f"{beta_a:.4f}",
+                f"{beta_e_obs:.4f}",
+                f"{beta_e_relevered:.4f}",
+                f"{de_ratio:.2f}",
+                f"{wacc:.2%}"
+            ]
+        }))
 
         # ROIC, Growth, Valuation
         roic = nopat / tic if tic else 0
