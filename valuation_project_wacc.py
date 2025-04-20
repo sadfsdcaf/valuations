@@ -135,7 +135,7 @@ if ticker:
         wacc = r_d*w_d*(1 - tax_rate) + r_e*w_e
 
 
-      # --- Display Key Metrics ---
+        # --- Display Key Metrics ---
         st.subheader("Key Financial Metrics")
         st.table(pd.DataFrame({
             'Metric': [
@@ -153,6 +153,7 @@ if ticker:
                 f"{wacc:.2%}"
             ]
         }))
+
 
         # ROIC, Growth, Valuation
         roic = nopat / tic if tic else 0
