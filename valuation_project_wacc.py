@@ -172,12 +172,37 @@ if ticker:
                       f"{er_de:.4f}", f"{tax_rate:.2f}", f"{taxprov/pretax if pretax else 0:.4f}", f"{wacc:.4f}"]
         }))
 
-        st.subheader("--- Valuation Using Perpetuity Methods ---")
+        # --- WACC Detailed Breakdown ---
+        st.subheader("--- WACC Detailed Breakdown ---")
         st.table(pd.DataFrame({
-            "Metric": ["NOPAT", "WACC", "Growth Rate", "Valuation (With Growth)", "Valuation (No Growth)"],
-            "Value": [f"${nopat/1e6:.2f}M", f"{wacc:.4f}", f"{gr:.4f}",
-                      f"${val_g/1e6:.2f}M" if wacc > gr else "N/A", f"${val_ng/1e6:.2f}M"]
+            "Metric": [
+                "Risk-Free Rate",
+                "Equity Beta (β_E)",
+                "Asset Beta (β_A)",
+                "Market Risk Premium",
+                "Cost of Equity (rₑ)",
+                "Market Cap ($M)",
+                "Debt ($Bn)",
+                "Cost of Debt (r_d)",
+                "Tax Rate",
+                "Effective Tax Rate",
+                "WACC"
+            ],
+            "Value": [
+                f"{ry:.4f}",
+                f"{beta_e:.4f}",
+                f"{beta_a:.4f}",
+                f"{market_risk_premium:.4f}",
+                f"{er_eq:.4f}",
+                f"{info.get('marketCap',0)/1e6:.2f}",
+                f"{td/1e9:.2f}",
+                f"{er_de:.4f}",
+                f"{tax_rate:.2%}",
+                f"{taxprov/pretax if pretax else 0:.2%}",
+                f"{wacc:.4f}"
+            ]
         }))
+
 
         # --- Forecast Section ---
         st.subheader("📈 Forecasting NOPAT with Compounding Growth")
